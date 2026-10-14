@@ -284,7 +284,602 @@
   <button data-tab="listening"><span class="ico">🎧</span>Аудио</button>
   <button data-tab="stats"><span class="ico">📊</span>Прогресс</button>
 </nav>
+// ============================================================
+// ЭКРАН: СПИСОК ЧТЕНИЯ
+// ============================================================
 
+function renderReading() {
+  app.innerHTML = `
+    <div class="section-title">📖 Бизнес-чтение</div>
+    ${READING.map(it => `
+      <div class="card tap" data-read="${it.id}">
+        <div class="badge">${it.type}</div>
+        <div class="card-title">${it.title}</div>
+      </div>
+    `).join('')}
+  `;
+  app.querySelectorAll('[data-read]').forEach(el => {
+    el.onclick = () => navigate('readingDetail', { id: el.dataset.read });
+  });
+}
+
+// ============================================================
+// ЭКРАН: ЧТЕНИЕ — ТЕКСТ + ВОПРОСЫ
+// ============================================================
+
+let readingSession = null;
+
+function renderReadingDetail(params) {
+  const item = READING.find(r => r.id === params.id);
+  if (!item) { navigate('reading', {}); return; }
+  headerTitle.textContent = item.type;
+
+  readingSession = { itemId: item.id, qIdx: 0, score: 0, questions: item.questions };
+
+  app.innerHTML = `
+    <div class="badge">${item.type}</div>
+    <h2 style="font-size:20px;margin-bottom:12px">${item.title}</h2>
+    <div class="reading-text">${escapeHtml(item.text)}</div>
+
+    <div class="btn-row">
+      <button class="btn" id="playBtn">🔊 Прослушать</button>
+      <button class="btn secondary" id="stopBtn">⏹ Стоп</button>
+    </div>
+
+    <div class="section-title">Вопросы</div>
+    <div id="quizBox"></div>
+  `;
+
+  document.getElementById('playBtn').onclick = () => speak(item.text, 0.9);
+  document.getElementById('stopBtn').onclick = () => stopSpeak();
+
+  drawQuestion('reading', readingSession);
+}
+
+// ============================================================
+// ЭКРАН: СПИСОК АУДИО
+// ============================================================
+
+function renderListening() {
+  app.innerHTML = `
+    <div class="section-title">🎧 Бизнес-аудио</div>
+    <p class="muted" style="margin-bottom:14px">Слушай и отвечай на вопросы. Текст откроется после ответа.</p>
+    ${LISTENING.map(it => `
+      <div class="card tap" data-listen="${it.id}">
+        <div class="badge">${it.type}</div>
+        <div class="card-title">${it.title}</div>
+      </div>
+    `).join('')}
+  `;
+  app.querySelectorAll('[data-listen]').forEach(el => {
+    el.onclick = () => navigate('listeningDetail', { id: el.dataset.listen });
+  });
+}
+
+// ============================================================
+// ЭКРАН: АУДИО — ПРОСЛУШИВАНИЕ + ВОПРОСЫ
+// ============================================================
+
+let listeningSession = null;
+
+function renderListeningDetail(params) {
+  const item = LISTENING.find(l => l.id === params.id);
+  if (!item) { navigate('listening', {}); return; }
+  headerTitle.textContent = item.type;
+
+  listeningSession = { itemId: item.id, qIdx: 0, score: 0, questions: item.questions, rate: 0.9, showText: false };
+
+  app.innerHTML = `
+    <div class="badge">${item.type}</div>
+    <h2 style="font-size:20px;margin-bottom:8px">${item.title}</h2>
+    <p class="muted" style="margin-bottom:14px">Нажми «Слушать». Текст откроется после ответов.</p>
+
+    <div class="btn-row">
+      <button class="btn" id="playBtn">▶️ Слушать</button>
+      <button class="btn secondary" id="stopBtn">⏹ Стоп</button>
+    </div>
+
+    <div class="speed-row" style="margin-top:14px">
+      <span class="lbl">Скорость:</span>
+      <button class="speed-btn active" data-rate="0.7">Медленно</button>
+      <button class="speed-btn" data-rate="0.9">Норма</button>
+      <button class="speed-btn" data-rate="1.1">Быстро</button>
+    </div>
+
+    <div id="audioText" class="hidden">
+      <div class="reading-text" style="background:var(--gray-bg);padding:14px;border-radius:10px">${escapeHtml(item.text)}</div>
+    </div>
+
+    <div class="section-title">Вопросы</div>
+    <div id="quizBox"></div>
+  `;
+
+  document.getElementById('playBtn').onclick = () => speak(item.text, listeningSession.rate);
+  document.getElementById('stopBtn').onclick = () => stopSpeak();
+
+  app.querySelectorAll('.speed-btn').forEach(b => {
+    b.onclick = () => {
+      app.querySelectorAll('.speed-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      listeningSession.rate = parseFloat(b.dataset.rate);
+    };
+  });
+
+  drawQuestion('listening', listeningSession);
+}
+
+// ============================================================
+// УНИВЕРСАЛЬНЫЙ РЕНДЕР ВОПРОСА
+// ============================================================
+
+function drawQuestion(prefix, session) {
+  const box = document.getElementById('quizBox');
+  if (!box) return;
+  const i = session.qIdx;
+  const qs = session.questions;
+
+  if (i >= qs.length) {
+    return drawResult(prefix, session);
+  }
+
+  const q = qs[i];
+  box.innerHTML = `
+    <div class="muted" style="margin-bottom:6px">Вопрос ${i + 1} / ${qs.length}</div>
+    <h3 style="font-size:17px;margin-bottom:14px;line-height:1.5">${escapeHtml(q.q)}</h3>
+    <div id="optionsBox"></div>
+    <div id="explainBox"></div>
+  `;
+
+  const optionsBox = document.getElementById('optionsBox');
+  q.options.forEach((opt, idx) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt;
+    div.onclick = () => {
+      if (div.dataset.locked) return;
+      optionsBox.querySelectorAll('.option').forEach(o => o.dataset.locked = '1');
+      const ok = idx === q.correct;
+      if (ok) div.classList.add('correct');
+      else {
+        div.classList.add('wrong');
+        optionsBox.children[q.correct].classList.add('correct');
+      }
+      if (ok) session.score++;
+      recordAnswer(prefix, ok);
+
+      if (q.explain) {
+        document.getElementById('explainBox').innerHTML =
+          `<div class="explain">💡 ${escapeHtml(q.explain)}</div>`;
+      }
+
+      setTimeout(() => {
+        session.qIdx++;
+        drawQuestion(prefix, session);
+      }, 900);
+    };
+    optionsBox.appendChild(div);
+  });
+}
+
+function drawResult(prefix, session) {
+  const box = document.getElementById('quizBox');
+  const total = session.questions.length;
+  const g = examGrade(session.score, total);
+
+  if (prefix === 'listening') {
+    document.getElementById('audioText').classList.remove('hidden');
+  }
+
+  box.innerHTML = `
+    <div style="text-align:center;padding:20px 0">
+      <div class="grade" style="color:${g.color}">${g.letter}</div>
+      <div class="grade-label">${g.label}</div>
+      <div class="muted">Правильно: ${session.score} / ${total}</div>
+    </div>
+    <button class="btn" id="nextBtn">Следующий материал</button>
+  `;
+
+  document.getElementById('nextBtn').onclick = () => {
+    if (prefix === 'reading') navigate('reading', {});
+    else if (prefix === 'listening') navigate('listening', {});
+    else navigate('grammar', {});
+  };
+}
+
+// ============================================================
+// ЭКРАН: ГРАММАТИКА
+// ============================================================
+
+let grammarSession = null;
+
+function renderGrammar() {
+  const qs = shuffle(GRAMMAR).slice(0, 10);
+  grammarSession = { qIdx: 0, score: 0, questions: qs };
+
+  app.innerHTML = `
+    <div class="section-title">🧩 Грамматика B1</div>
+    <p class="muted" style="margin-bottom:16px">10 случайных вопросов</p>
+    <div id="quizBox"></div>
+  `;
+
+  drawGrammarQuestion();
+}
+
+function drawGrammarQuestion() {
+  const box = document.getElementById('quizBox');
+  const s = grammarSession;
+  const i = s.qIdx;
+
+  if (i >= s.questions.length) {
+    const g = examGrade(s.score, s.questions.length);
+    box.innerHTML = `
+      <div style="text-align:center;padding:20px 0">
+        <div class="grade" style="color:${g.color}">${g.letter}</div>
+        <div class="grade-label">${g.label}</div>
+        <div class="muted">Правильно: ${s.score} / ${s.questions.length}</div>
+      </div>
+      <button class="btn" id="againBtn">Новая порция</button>
+    `;
+    document.getElementById('againBtn').onclick = () => renderGrammar();
+    return;
+  }
+
+  const q = s.questions[i];
+  box.innerHTML = `
+    <div class="muted" style="margin-bottom:6px">Вопрос ${i + 1} / ${s.questions.length}</div>
+    <h3 style="font-size:17px;margin-bottom:14px;line-height:1.5">${escapeHtml(q.q)}</h3>
+    <div id="optionsBox"></div>
+    <div id="explainBox"></div>
+  `;
+
+  const optionsBox = document.getElementById('optionsBox');
+  q.options.forEach((opt, idx) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt;
+    div.onclick = () => {
+      if (div.dataset.locked) return;
+      optionsBox.querySelectorAll('.option').forEach(o => o.dataset.locked = '1');
+      const ok = idx === q.correct;
+      if (ok) div.classList.add('correct');
+      else {
+        div.classList.add('wrong');
+        optionsBox.children[q.correct].classList.add('correct');
+      }
+      if (ok) s.score++;
+      recordAnswer('grammar', ok);
+
+      if (q.explain) {
+        document.getElementById('explainBox').innerHTML =
+          `<div class="explain">💡 ${escapeHtml(q.explain)}</div>`;
+      }
+
+      setTimeout(() => { s.qIdx++; drawGrammarQuestion(); }, 900);
+    };
+    optionsBox.appendChild(div);
+  });
+}
+
+// ============================================================
+// ЭКРАН: СПИСОК ЭКЗАМЕНОВ
+// ============================================================
+
+function renderExams() {
+  app.innerHTML = `
+    <div class="section-title">📝 Экзамены по темам</div>
+    <p class="muted" style="margin-bottom:16px">Открывается, когда изучено ≥60% слов темы.</p>
+    ${TOPICS.map(t => {
+      const p = topicProgress(t);
+      const ready = (p.mastered + p.learning) / p.total >= 0.6;
+      const best = STATE.exams[t.id]?.best;
+      return `
+        <div class="card">
+          <div class="card-title">${t.emoji} ${t.title}</div>
+          <div class="card-desc">Изучено: ${p.mastered + p.learning} из ${p.total}</div>
+          <button class="btn ${ready ? '' : 'secondary'}" data-exam="${t.id}" ${ready ? '' : 'disabled'} style="margin-top:12px">
+            ${ready ? '📝 Пройти экзамен' : '🔒 Нужно 60% слов'}
+          </button>
+          ${best != null ? `<div class="muted" style="text-align:center;margin-top:8px">Лучший: ${best}/10</div>` : ''}
+        </div>
+      `;
+    }).join('')}
+  `;
+
+  app.querySelectorAll('[data-exam]').forEach(el => {
+    el.onclick = () => {
+      if (!el.disabled) navigate('exam', { topicId: el.dataset.exam });
+    };
+  });
+}
+
+// ============================================================
+// ЭКРАН: ЭКЗАМЕН
+// ============================================================
+
+let examSession = null;
+
+function renderExam(params) {
+  const topic = TOPICS.find(t => t.id === params.topicId);
+  if (!topic) { navigate('exams', {}); return; }
+  headerTitle.textContent = 'Экзамен: ' + topic.title;
+
+  const words = shuffle(topic.words).slice(0, 10);
+  const allRu = topic.words.map(w => w.ru);
+  const allEn = topic.words.map(w => w.en);
+
+  const questions = words.map((w, idx) => {
+    const mode = idx % 3;
+    if (mode === 0) {
+      const distractors = shuffle(allRu.filter(r => r !== w.ru)).slice(0, 3);
+      const options = shuffle([w.ru, ...distractors]);
+      return { q: `Как переводится «${w.en}»?`, options, correct: options.indexOf(w.ru), word: w };
+    }
+    if (mode === 1) {
+      const distractors = shuffle(allEn.filter(e => e !== w.en)).slice(0, 3);
+      const options = shuffle([w.en, ...distractors]);
+      return { q: `Английское слово для «${w.ru}»:`, options, correct: options.indexOf(w.en), word: w };
+    }
+    const blank = w.ex.replace(new RegExp(w.en, 'i'), '____');
+    const distractors = shuffle(allEn.filter(e => e !== w.en)).slice(0, 3);
+    const options = shuffle([w.en, ...distractors]);
+    return { q: `Вставь слово:\n\n${blank}`, options, correct: options.indexOf(w.en), word: w };
+  });
+
+  examSession = {
+    topicId: topic.id,
+    qIdx: 0,
+    score: 0,
+    timeLeft: 30,
+    answers: [],
+    questions,
+    timer: null,
+  };
+
+  app.innerHTML = `<div id="examBox"></div>`;
+  drawExamQuestion();
+}
+
+function drawExamQuestion() {
+  const s = examSession;
+  const box = document.getElementById('examBox');
+  const i = s.qIdx;
+
+  if (s.timer) clearInterval(s.timer);
+
+  if (i >= s.questions.length) {
+    return finishExam();
+  }
+
+  const q = s.questions[i];
+  box.innerHTML = `
+    <div class="timer-row">
+      <span>Вопрос ${i + 1} / ${s.questions.length}</span>
+      <span class="timer" id="timerEl">⏱ ${s.timeLeft}s</span>
+    </div>
+    <div class="bar-bg" style="margin-bottom:18px">
+      <div class="bar-fill" style="width:${((i + 1) / s.questions.length) * 100}%;background:var(--blue)"></div>
+    </div>
+    <h3 style="font-size:17px;margin-bottom:14px;line-height:1.5;white-space:pre-wrap">${escapeHtml(q.q)}</h3>
+    <div id="optionsBox"></div>
+  `;
+
+  const optionsBox = document.getElementById('optionsBox');
+  q.options.forEach((opt, idx) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = opt;
+    div.onclick = () => examAnswer(idx);
+    optionsBox.appendChild(div);
+  });
+
+  s.timeLeft = 30;
+  const timerEl = document.getElementById('timerEl');
+  s.timer = setInterval(() => {
+    s.timeLeft--;
+    if (timerEl) {
+      timerEl.textContent = `⏱ ${s.timeLeft}s`;
+      if (s.timeLeft <= 5) timerEl.classList.add('warn');
+    }
+    if (s.timeLeft <= 0) {
+      clearInterval(s.timer);
+      examAnswer(-1);
+    }
+  }, 1000);
+}
+
+function examAnswer(picked) {
+  const s = examSession;
+  if (s.timer) clearInterval(s.timer);
+  const i = s.qIdx;
+  const q = s.questions[i];
+
+  const optionsBox = document.getElementById('optionsBox');
+  if (optionsBox) {
+    optionsBox.querySelectorAll('.option').forEach(o => o.dataset.locked = '1');
+    if (picked >= 0) {
+      if (picked === q.correct) optionsBox.children[picked].classList.add('correct');
+      else {
+        optionsBox.children[picked].classList.add('wrong');
+        optionsBox.children[q.correct].classList.add('correct');
+      }
+    } else {
+      optionsBox.children[q.correct].classList.add('correct');
+    }
+  }
+
+  const ok = picked === q.correct;
+  if (ok) s.score++;
+  s.answers.push({ correct: ok, word: q.word });
+  recordAnswer('exam', ok);
+
+  setTimeout(() => {
+    s.qIdx++;
+    drawExamQuestion();
+  }, 900);
+}
+
+function finishExam() {
+  const s = examSession;
+  const total = s.questions.length;
+
+  const prev = STATE.exams[s.topicId] || { best: 0, attempts: 0 };
+  STATE.exams[s.topicId] = {
+    best: Math.max(prev.best, s.score),
+    attempts: prev.attempts + 1,
+    lastScore: s.score,
+  };
+  saveState();
+
+  const g = examGrade(s.score, total);
+
+  document.getElementById('examBox').innerHTML = `
+    <h2 style="margin-bottom:14px">Экзамен завершён</h2>
+    <div class="grade" style="color:${g.color}">${g.letter}</div>
+    <div class="grade-label">${g.label}</div>
+    <div class="muted" style="text-align:center;margin-bottom:20px">Правильно: ${s.score} / ${total}</div>
+
+    <div class="section-title" style="margin-top:0">Разбор ответов</div>
+    ${s.answers.map(a => `
+      <div class="review-row">
+        <span class="icon">${a.correct ? '✅' : '❌'}</span>
+        <div>
+          <div class="review-word">${a.word.en}</div>
+          <div class="review-tr">${a.word.ru}</div>
+        </div>
+      </div>
+    `).join('')}
+
+    <button class="btn" id="retryBtn" style="margin-top:20px">Пройти заново</button>
+    <button class="btn secondary" id="backBtn2">К темам</button>
+  `;
+
+  document.getElementById('retryBtn').onclick = () => navigate('exam', { topicId: s.topicId });
+  document.getElementById('backBtn2').onclick = () => navigate('topics', {});
+}
+
+// ============================================================
+// ЭКРАН: СТАТИСТИКА
+// ============================================================
+
+function renderStats() {
+  const { stats, streak } = STATE;
+  const total = stats.total || 0;
+  const correct = stats.correct || 0;
+  const acc = total ? Math.round((correct / total) * 100) : 0;
+
+  let tw = 0, mastered = 0, learning = 0;
+  for (const t of TOPICS) {
+    const p = topicProgress(t);
+    tw += p.total;
+    mastered += p.mastered;
+    learning += p.learning;
+  }
+
+  const bm = stats.byMode || {};
+
+  app.innerHTML = `
+    <div class="section-title">📊 Статистика</div>
+
+    <div class="card">
+      <div class="stat-row"><span class="label">🔥 Streak</span><span class="value">${streak.count} дн.</span></div>
+      <div class="stat-row"><span class="label">🏆 Рекорд</span><span class="value">${streak.best} дн.</span></div>
+      <div class="stat-row"><span class="label">✅ Точность</span><span class="value">${acc}%</span></div>
+      <div class="stat-row"><span class="label">📝 Всего ответов</span><span class="value">${total}</span></div>
+    </div>
+
+    <div class="section-title">Слова</div>
+    <div class="card">
+      <div class="stat-row"><span class="label">🟢 Освоено</span><span class="value">${mastered}</span></div>
+      <div class="stat-row"><span class="label">🟡 В работе</span><span class="value">${learning}</span></div>
+      <div class="stat-row"><span class="label">⚪ Новые</span><span class="value">${tw - mastered - learning}</span></div>
+    </div>
+
+    <div class="section-title">По темам</div>
+    <div class="card">
+      ${TOPICS.map(t => {
+        const p = topicProgress(t);
+        const pct = Math.round((p.mastered / p.total) * 100);
+        return `
+          <div style="margin-bottom:12px">
+            <div class="stat-row" style="padding:0">
+              <span class="label">${t.emoji} ${t.title}</span>
+              <span class="value">${pct}%</span>
+            </div>
+            <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div class="section-title">По режимам</div>
+    <div class="card">
+      <div class="stat-row"><span class="label">📚 Словарь</span><span class="value">${bm.vocab || 0}</span></div>
+      <div class="stat-row"><span class="label">📖 Чтение</span><span class="value">${bm.reading || 0}</span></div>
+      <div class="stat-row"><span class="label">🎧 Аудирование</span><span class="value">${bm.listening || 0}</span></div>
+      <div class="stat-row"><span class="label">🧩 Грамматика</span><span class="value">${bm.grammar || 0}</span></div>
+      <div class="stat-row"><span class="label">📝 Экзамены</span><span class="value">${bm.exam || 0}</span></div>
+    </div>
+
+    <button class="btn secondary" id="resetBtn" style="margin-top:20px">🗑 Сбросить прогресс</button>
+  `;
+
+  document.getElementById('resetBtn').onclick = () => {
+    if (confirm('Точно удалить весь прогресс? Это нельзя отменить.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      STATE = defaultState();
+      navigate('home', {});
+    }
+  };
+}
+
+// ============================================================
+// РОУТЕР
+// ============================================================
+
+function render(screen, params) {
+  switch (screen) {
+    case 'home': return renderHome();
+    case 'topics': return renderTopics();
+    case 'vocab': return renderVocab(params);
+    case 'reading': return renderReading();
+    case 'readingDetail': return renderReadingDetail(params);
+    case 'listening': return renderListening();
+    case 'listeningDetail': return renderListeningDetail(params);
+    case 'grammar': return renderGrammar();
+    case 'exams': return renderExams();
+    case 'exam': return renderExam(params);
+    case 'stats': return renderStats();
+  }
+}
+
+// ============================================================
+// УТИЛИТЫ
+// ============================================================
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Делаем функции глобальными для onclick в HTML
+window.navigate = navigate;
+
+// ============================================================
+// СТАРТ
+// ============================================================
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('hide');
+      setTimeout(() => splash.remove(), 500);
+    }
+  }, 600);
+  renderHome();
+});
 <script>
 // === КОД ДОБАВИТСЯ В ЧАСТЯХ 2–4 ===
 // ============================================================
@@ -592,3 +1187,403 @@ const GRAMMAR = [
   { q: 'This exercise is ___ than the previous one.', options: ['difficulter', 'more difficult', 'most difficult'], correct: 1 },
   { q: 'He is the ___ student in the class.', options: ['best', 'better', 'goodest'], correct: 0 },
 ];
+// ============================================================
+// ХРАНИЛИЩЕ
+// ============================================================
+
+const STORAGE_KEY = 'en_b1_state_v1';
+
+function defaultState() {
+  return {
+    vocab: {},
+    streak: { count: 0, lastDay: null, best: 0 },
+    stats: { total: 0, correct: 0, byMode: {} },
+    exams: {},
+  };
+}
+
+let STATE = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const d = defaultState();
+    return {
+      ...d, ...parsed,
+      stats: { ...d.stats, ...(parsed.stats || {}) },
+      streak: { ...d.streak, ...(parsed.streak || {}) },
+    };
+  } catch { return defaultState(); }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch {}
+}
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function touchStreak() {
+  const today = todayKey();
+  const { lastDay, count, best } = STATE.streak;
+  if (lastDay === today) return;
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  const yesterday = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  STATE.streak.count = lastDay === yesterday ? count + 1 : 1;
+  STATE.streak.lastDay = today;
+  STATE.streak.best = Math.max(best, STATE.streak.count);
+  saveState();
+}
+
+function recordAnswer(mode, ok) {
+  STATE.stats.total++;
+  if (ok) STATE.stats.correct++;
+  STATE.stats.byMode[mode] = (STATE.stats.byMode[mode] || 0) + 1;
+  touchStreak();
+  saveState();
+}
+
+// ============================================================
+// SRS
+// ============================================================
+
+const SRS_INTERVALS = [0, 1, 3, 7, 14, 30];
+const MASTER_LEVEL = 5;
+const DAY_MS = 86400000;
+
+function isDue(entry, now = Date.now()) {
+  if (!entry) return true;
+  return !entry.nextReview || entry.nextReview <= now;
+}
+
+function updateWord(entry, known, now = Date.now()) {
+  const prev = entry || { level: 0, correct: 0, wrong: 0 };
+  const level = known ? Math.min(prev.level + 1, MASTER_LEVEL) : 0;
+  const days = SRS_INTERVALS[level];
+  return {
+    level,
+    correct: (prev.correct || 0) + (known ? 1 : 0),
+    wrong: (prev.wrong || 0) + (known ? 0 : 1),
+    lastReview: now,
+    nextReview: now + days * DAY_MS,
+  };
+}
+
+function pickQueue(words, now = Date.now()) {
+  const due = [], fresh = [];
+  for (const w of words) {
+    const e = STATE.vocab[w.key];
+    if (!e) fresh.push(w);
+    else if (isDue(e, now)) due.push(w);
+  }
+  return [...due, ...fresh.slice(0, 10)];
+}
+
+function topicProgress(topic) {
+  let m = 0, l = 0, f = 0;
+  for (const w of topic.words) {
+    const lvl = STATE.vocab[topic.id + ':' + w.en]?.level ?? 0;
+    if (lvl >= MASTER_LEVEL) m++;
+    else if (lvl > 0) l++;
+    else f++;
+  }
+  return { mastered: m, learning: l, fresh: f, total: m + l + f };
+}
+
+function examGrade(score, total) {
+  const pct = total ? (score / total) * 100 : 0;
+  if (pct >= 90) return { letter: 'A', label: 'Отлично', color: '#2fae55' };
+  if (pct >= 75) return { letter: 'B', label: 'Хорошо', color: '#4aa3ff' };
+  if (pct >= 60) return { letter: 'C', label: 'Удовлетворительно', color: '#e0a800' };
+  if (pct >= 40) return { letter: 'D', label: 'Слабо', color: '#e07a2f' };
+  return { letter: 'F', label: 'Провал', color: '#e05252' };
+}
+
+function shuffle(a) {
+  const arr = [...a];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ============================================================
+// ОЗВУЧКА (Web Speech API)
+// ============================================================
+
+let voices = [];
+
+function loadVoices() {
+  voices = window.speechSynthesis?.getVoices?.() || [];
+}
+if (typeof speechSynthesis !== 'undefined') {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speak(text, rate = 0.95) {
+  if (typeof speechSynthesis === 'undefined') {
+    alert('Озвучка не поддерживается в этом браузере');
+    return;
+  }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = rate;
+  const voice = voices.find(v => v.lang.startsWith('en'));
+  if (voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
+
+function stopSpeak() { try { speechSynthesis.cancel(); } catch {} }
+
+// ============================================================
+// НАВИГАЦИЯ
+// ============================================================
+
+let currentScreen = 'home';
+let screenStack = [];
+
+const app = document.getElementById('app');
+const headerTitle = document.getElementById('screenTitle');
+const backBtn = document.getElementById('backBtn');
+
+const TITLES = {
+  home: 'Business English B1',
+  topics: 'Словарь по темам',
+  vocab: 'Словарь',
+  reading: 'Чтение',
+  readingDetail: 'Чтение',
+  listening: 'Аудирование',
+  listeningDetail: 'Аудирование',
+  grammar: 'Грамматика',
+  exams: 'Экзамены',
+  exam: 'Экзамен',
+  stats: 'Статистика',
+  topicComplete: 'Готово',
+};
+
+function navigate(screen, params = {}) {
+  if (screen !== currentScreen) screenStack.push(currentScreen);
+  currentScreen = screen;
+  backBtn.classList.toggle('show', screen !== 'home');
+  headerTitle.textContent = TITLES[screen] || 'Business English B1';
+  render(screen, params);
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === screen || 
+      (screen === 'vocab' && b.dataset.tab === 'topics') ||
+      (screen === 'exam' && b.dataset.tab === 'topics'));
+  });
+  window.scrollTo(0, 0);
+}
+
+backBtn.onclick = () => {
+  const prev = screenStack.pop() || 'home';
+  currentScreen = prev;
+  backBtn.classList.toggle('show', prev !== 'home');
+  headerTitle.textContent = TITLES[prev] || 'Business English B1';
+  render(prev, {});
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === prev);
+  });
+  window.scrollTo(0, 0);
+};
+
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    screenStack = [];
+    navigate(b.dataset.tab, {});
+  };
+});
+
+// ============================================================
+// ЭКРАН: ГЛАВНАЯ
+// ============================================================
+
+function renderHome() {
+  const { stats, streak } = STATE;
+  let total = 0, mastered = 0, learning = 0;
+  for (const t of TOPICS) {
+    const p = topicProgress(t);
+    total += p.total;
+    mastered += p.mastered;
+    learning += p.learning;
+  }
+
+  const items = [
+    { screen: 'topics', title: '📚 Словарь по темам', desc: '10 бизнес-тем + SRS' },
+    { screen: 'reading', title: '📖 Бизнес-чтение', desc: 'Письма, отчёты, кейсы' },
+    { screen: 'listening', title: '🎧 Бизнес-аудио', desc: 'Звонки, встречи, переговоры' },
+    { screen: 'grammar', title: '🧩 Грамматика', desc: '20 упражнений B1' },
+    { screen: 'exams', title: '📝 Экзамены', desc: 'По темам, оценка A–F' },
+    { screen: 'stats', title: '📊 Статистика', desc: 'Прогресс, streak, точность' },
+  ];
+
+  app.innerHTML = `
+    <div class="stats-header">
+      <div class="streak">🔥 Streak: ${streak.count} дн.</div>
+      <div class="summary">
+        Слова: ${mastered} освоено · ${learning} в работе · ${total - mastered - learning} новых
+      </div>
+    </div>
+    ${items.map(i => `
+      <div class="card tap" data-screen="${i.screen}">
+        <div class="card-title">${i.title}</div>
+        <div class="card-desc">${i.desc}</div>
+      </div>
+    `).join('')}
+  `;
+
+  app.querySelectorAll('[data-screen]').forEach(el => {
+    el.onclick = () => navigate(el.dataset.screen, {});
+  });
+}
+
+// ============================================================
+// ЭКРАН: СПИСОК ТЕМ
+// ============================================================
+
+function renderTopics() {
+  app.innerHTML = TOPICS.map(t => {
+    const p = topicProgress(t);
+    const pct = Math.round((p.mastered / p.total) * 100);
+    const ready = (p.mastered + p.learning) / p.total >= 0.6;
+    const exam = STATE.exams[t.id];
+    return `
+      <div class="card">
+        <div class="card-row" data-topic="${t.id}">
+          <div style="flex:1">
+            <div class="card-title">${t.emoji} ${t.title}</div>
+            <div class="card-desc">🟢 ${p.mastered} · 🟡 ${p.learning} · ⚪ ${p.fresh} из ${p.total}</div>
+          </div>
+          <div style="font-weight:700;color:var(--blue)">${pct}%</div>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <button class="btn ${ready ? '' : 'secondary'}" data-exam="${t.id}" ${ready ? '' : 'disabled'} style="margin-top:12px">
+          ${ready ? '📝 Пройти экзамен' : '🔒 Нужно 60% слов'}
+        </button>
+        ${exam ? `<div class="muted" style="text-align:center;margin-top:8px">Лучший: ${exam.best}/10 · попыток: ${exam.attempts}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  app.querySelectorAll('[data-topic]').forEach(el => {
+    el.onclick = () => navigate('vocab', { topicId: el.dataset.topic });
+  });
+  app.querySelectorAll('[data-exam]').forEach(el => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if (!el.disabled) navigate('exam', { topicId: el.dataset.exam });
+    };
+  });
+}
+
+// ============================================================
+// ЭКРАН: КАРТОЧКИ СЛОВ
+// ============================================================
+
+let vocabSession = null;
+
+function renderVocab(params) {
+  const topic = TOPICS.find(t => t.id === params.topicId);
+  if (!topic) { navigate('topics', {}); return; }
+  headerTitle.textContent = topic.emoji + ' ' + topic.title;
+
+  const words = topic.words.map(w => ({
+    ...w,
+    key: topic.id + ':' + w.en,
+    topicEmoji: topic.emoji,
+  }));
+  const queue = pickQueue(words);
+
+  if (!queue.length) {
+    vocabSession = null;
+    app.innerHTML = `
+      <div class="center">
+        <div style="font-size:60px">🎉</div>
+        <h2 style="margin-top:12px">Всё повторено!</h2>
+        <p class="muted" style="margin-top:8px">Возвращайся, когда наступит время повторения.</p>
+        <button class="btn" onclick="navigate('topics',{})">К темам</button>
+      </div>
+    `;
+    return;
+  }
+
+  vocabSession = { topicId: topic.id, queue, idx: 0, showBack: false, correct: 0, wrong: 0 };
+  drawVocabCard();
+}
+
+function drawVocabCard() {
+  const s = vocabSession;
+  if (!s) return;
+  if (s.idx >= s.queue.length) return finishVocab();
+  const w = s.queue[s.idx];
+  const lvl = STATE.vocab[w.key]?.level ?? 0;
+
+  app.innerHTML = `
+    <div class="muted" style="margin-bottom:10px;font-size:13px">
+      ${s.idx + 1} / ${s.queue.length} · уровень ${lvl}/5
+    </div>
+
+    <div class="word-card">
+      <div class="word-en">${w.en}</div>
+      <button class="speak-btn" id="speakWord">🔊 Произнести</button>
+      ${s.showBack ? `
+        <div class="word-ru">${w.ru}</div>
+        <div class="word-ex">${w.ex}</div>
+      ` : ''}
+    </div>
+
+    ${!s.showBack ? `
+      <button class="btn" id="showBtn">Показать перевод</button>
+    ` : `
+      <div class="btn-row">
+        <button class="btn red" id="noBtn">Не знаю</button>
+        <button class="btn green" id="yesBtn">Знаю</button>
+      </div>
+    `}
+  `;
+
+  document.getElementById('speakWord').onclick = () => speak(w.en);
+  if (!s.showBack) {
+    document.getElementById('showBtn').onclick = () => {
+      s.showBack = true;
+      speak(w.en);
+      drawVocabCard();
+    };
+  } else {
+    document.getElementById('noBtn').onclick = () => answerWord(false);
+    document.getElementById('yesBtn').onclick = () => answerWord(true);
+  }
+}
+
+function answerWord(known) {
+  const s = vocabSession;
+  const w = s.queue[s.idx];
+  STATE.vocab[w.key] = updateWord(STATE.vocab[w.key], known);
+  recordAnswer('vocab', known);
+  if (known) s.correct++; else s.wrong++;
+  s.idx++;
+  s.showBack = false;
+  drawVocabCard();
+}
+
+function finishVocab() {
+  const s = vocabSession;
+  const total = s.correct + s.wrong;
+  const acc = total ? Math.round(s.correct / total * 100) : 0;
+  vocabSession = null;
+  app.innerHTML = `
+    <div class="center">
+      <div style="font-size:60px">🎉</div>
+      <h2 style="margin-top:12px">Сессия завершена!</h2>
+      <p class="muted" style="margin-top:8px">Правильно: ${s.correct} / ${total} (${acc}%)</p>
+      <button class="btn" onclick="navigate('topics',{})">К темам</button>
+    </div>
+  `;
+}
