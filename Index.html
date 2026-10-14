@@ -284,7 +284,715 @@
   <button data-tab="listening"><span class="ico">🎧</span>Аудио</button>
   <button data-tab="stats"><span class="ico">📊</span>Прогресс</button>
 </nav>
+
+<script>
+// === КОД ДОБАВИТСЯ В ЧАСТЯХ 2–4 ===
+ // ============================================================
+// ДАННЫЕ
 // ============================================================
+
+const TOPICS = [
+  { id: 'meetings', title: 'Встречи и переговоры', emoji: '🤝', words: [
+    { en: 'agenda', ru: 'повестка дня', ex: "Let's go through the agenda." },
+    { en: 'minutes', ru: 'протокол встречи', ex: 'Who is taking the minutes?' },
+    { en: 'negotiate', ru: 'вести переговоры', ex: 'We need to negotiate the price.' },
+    { en: 'compromise', ru: 'компромисс', ex: 'We reached a compromise.' },
+    { en: 'follow up', ru: 'напоминать, следить', ex: "I'll follow up next week." },
+    { en: 'stakeholder', ru: 'заинтересованная сторона', ex: 'The stakeholders approved the plan.' },
+    { en: 'consensus', ru: 'консенсус', ex: 'We finally reached a consensus.' },
+    { en: 'proposal', ru: 'предложение', ex: 'The proposal looks promising.' },
+    { en: 'outcome', ru: 'результат', ex: 'What was the outcome?' },
+    { en: 'postpone', ru: 'откладывать', ex: "Let's postpone the meeting." },
+    { en: 'sum up', ru: 'подводить итог', ex: 'Let me sum up the points.' },
+    { en: 'bottom line', ru: 'суть, итог', ex: "Bottom line is we're over budget." },
+  ]},
+  { id: 'emails', title: 'Email и переписка', emoji: '📧', words: [
+    { en: 'attach', ru: 'прикреплять', ex: 'I have attached the report.' },
+    { en: 'forward', ru: 'переслать', ex: 'Please forward this to the team.' },
+    { en: 'recipient', ru: 'получатель', ex: 'The recipient did not respond.' },
+    { en: 'subject line', ru: 'тема письма', ex: 'Use a clear subject line.' },
+    { en: 'regarding', ru: 'касательно', ex: 'I am writing regarding your offer.' },
+    { en: 'apologise', ru: 'извиняться', ex: 'I apologise for the delay.' },
+    { en: 'clarify', ru: 'уточнять', ex: 'Could you clarify this point?' },
+    { en: 'enclose', ru: 'вкладывать', ex: 'I enclose the signed contract.' },
+    { en: 'confirm', ru: 'подтверждать', ex: 'Please confirm the meeting time.' },
+    { en: 'reminder', ru: 'напоминание', ex: 'This is a friendly reminder.' },
+    { en: 'draft', ru: 'черновик', ex: 'I will send you a draft first.' },
+  ]},
+  { id: 'finance', title: 'Финансы и учёт', emoji: '💵', words: [
+    { en: 'revenue', ru: 'выручка', ex: 'Our revenue grew by 20%.' },
+    { en: 'profit', ru: 'прибыль', ex: 'We made a good profit.' },
+    { en: 'loss', ru: 'убыток', ex: 'The company reported a loss.' },
+    { en: 'budget', ru: 'бюджет', ex: 'The budget is tight this quarter.' },
+    { en: 'invoice', ru: 'счёт-фактура', ex: 'Please pay the invoice by Friday.' },
+    { en: 'expense', ru: 'расход', ex: 'Travel expenses are covered.' },
+    { en: 'quarter', ru: 'квартал', ex: 'We report every quarter.' },
+    { en: 'forecast', ru: 'прогноз', ex: 'The sales forecast looks good.' },
+    { en: 'audit', ru: 'аудит', ex: 'The annual audit starts Monday.' },
+    { en: 'cash flow', ru: 'движение денег', ex: 'We need to manage cash flow.' },
+    { en: 'asset', ru: 'актив', ex: 'Real estate is a valuable asset.' },
+    { en: 'liability', ru: 'обязательство', ex: 'Loans are a liability.' },
+    { en: 'shareholder', ru: 'акционер', ex: 'Shareholders approved the deal.' },
+    { en: 'dividend', ru: 'дивиденды', ex: 'Dividends are paid quarterly.' },
+  ]},
+  { id: 'marketing', title: 'Маркетинг и продажи', emoji: '📈', words: [
+    { en: 'target audience', ru: 'целевая аудитория', ex: 'Our target audience is young professionals.' },
+    { en: 'campaign', ru: 'кампания', ex: 'The campaign was a success.' },
+    { en: 'brand awareness', ru: 'узнаваемость бренда', ex: 'We want to raise brand awareness.' },
+    { en: 'lead', ru: 'потенциальный клиент', ex: 'We generated 200 new leads.' },
+    { en: 'conversion', ru: 'конверсия', ex: 'Our conversion rate is 3%.' },
+    { en: 'launch', ru: 'запускать', ex: 'We launch the product in May.' },
+    { en: 'competitor', ru: 'конкурент', ex: 'Our competitors lowered prices.' },
+    { en: 'market share', ru: 'доля рынка', ex: 'We gained 5% market share.' },
+    { en: 'promotion', ru: 'акция, продвижение', ex: 'We run a winter promotion.' },
+    { en: 'pitch', ru: 'презентация идеи', ex: 'She gave a great sales pitch.' },
+    { en: 'upsell', ru: 'продавать дороже', ex: 'Try to upsell the premium plan.' },
+    { en: 'feedback', ru: 'обратная связь', ex: 'We collect customer feedback.' },
+    { en: 'reach', ru: 'охват', ex: 'The ad reached 1M people.' },
+  ]},
+  { id: 'hr', title: 'HR и найм', emoji: '👥', words: [
+    { en: 'hire', ru: 'нанимать', ex: 'We hired two new developers.' },
+    { en: 'candidate', ru: 'кандидат', ex: 'The candidate has strong skills.' },
+    { en: 'CV', ru: 'резюме', ex: 'Send your CV to HR.' },
+    { en: 'interview', ru: 'собеседование', ex: 'The interview lasted an hour.' },
+    { en: 'onboarding', ru: 'адаптация', ex: 'Onboarding takes two weeks.' },
+    { en: 'probation period', ru: 'испытательный срок', ex: 'Probation is three months.' },
+    { en: 'resignation', ru: 'увольнение по собственному', ex: 'She handed in her resignation.' },
+    { en: 'layoff', ru: 'сокращение', ex: 'The layoffs affected 50 people.' },
+    { en: 'benefits', ru: 'льготы', ex: 'The benefits include insurance.' },
+    { en: 'appraisal', ru: 'аттестация', ex: 'The annual appraisal is in December.' },
+    { en: 'team player', ru: 'командный игрок', ex: 'We look for team players.' },
+    { en: 'workload', ru: 'нагрузка', ex: 'My workload is heavy this week.' },
+    { en: 'promotion', ru: 'повышение', ex: 'He got a promotion to manager.' },
+    { en: 'turnover', ru: 'текучесть кадров', ex: 'Staff turnover is high.' },
+  ]},
+  { id: 'presentations', title: 'Презентации', emoji: '🎤', words: [
+    { en: 'slide', ru: 'слайд', ex: 'Move to the next slide, please.' },
+    { en: 'overview', ru: 'обзор', ex: 'Here is a quick overview.' },
+    { en: 'highlight', ru: 'подчёркивать', ex: 'I want to highlight three points.' },
+    { en: 'key takeaway', ru: 'главный вывод', ex: 'The key takeaway is simplicity.' },
+    { en: 'elaborate', ru: 'пояснять', ex: 'Could you elaborate on that?' },
+    { en: 'audience', ru: 'аудитория', ex: 'The audience asked questions.' },
+    { en: 'visual aid', ru: 'наглядное пособие', ex: 'Charts are useful visual aids.' },
+    { en: 'rehearse', ru: 'репетировать', ex: 'Rehearse your speech twice.' },
+    { en: 'wrap up', ru: 'завершать', ex: 'Let me wrap up with a summary.' },
+    { en: 'handout', ru: 'раздаточный материал', ex: 'There is a handout on your seat.' },
+    { en: 'body language', ru: 'язык тела', ex: 'Good body language matters.' },
+    { en: 'confident', ru: 'уверенный', ex: 'She gave a confident talk.' },
+  ]},
+  { id: 'legal', title: 'Контракты и право', emoji: '📄', words: [
+    { en: 'contract', ru: 'договор', ex: 'Sign the contract by Friday.' },
+    { en: 'clause', ru: 'пункт договора', ex: 'Check clause 5 carefully.' },
+    { en: 'terms and conditions', ru: 'условия', ex: 'Read the terms and conditions.' },
+    { en: 'party', ru: 'сторона', ex: 'Both parties agree.' },
+    { en: 'breach', ru: 'нарушение', ex: 'This is a breach of contract.' },
+    { en: 'liability', ru: 'ответственность', ex: 'We limit our liability.' },
+    { en: 'confidential', ru: 'конфиденциальный', ex: 'Keep this information confidential.' },
+    { en: 'compliance', ru: 'соответствие', ex: 'Compliance is mandatory.' },
+    { en: 'intellectual property', ru: 'интеллектуальная собственность', ex: 'Protect your intellectual property.' },
+    { en: 'dispute', ru: 'спор', ex: 'We resolved the dispute quickly.' },
+    { en: 'arbitration', ru: 'арбитраж', ex: 'Disputes go to arbitration.' },
+    { en: 'terminate', ru: 'расторгать', ex: 'Either party may terminate.' },
+    { en: 'warranty', ru: 'гарантия', ex: 'The warranty covers two years.' },
+    { en: 'amend', ru: 'вносить изменения', ex: 'We need to amend the agreement.' },
+  ]},
+  { id: 'projects', title: 'Проекты', emoji: '🗂️', words: [
+    { en: 'milestone', ru: 'этап, веха', ex: 'We reached the first milestone.' },
+    { en: 'deliverable', ru: 'результат проекта', ex: 'The deliverable is due Friday.' },
+    { en: 'scope', ru: 'объём работ', ex: 'The scope has changed.' },
+    { en: 'resource', ru: 'ресурс', ex: 'We lack resources for this.' },
+    { en: 'timeline', ru: 'график', ex: 'The timeline is tight.' },
+    { en: 'risk', ru: 'риск', ex: 'We identified three main risks.' },
+    { en: 'backlog', ru: 'список задач', ex: 'The backlog is getting long.' },
+    { en: 'sprint', ru: 'спринт', ex: 'Sprint review is on Thursday.' },
+    { en: 'kick-off', ru: 'старт проекта', ex: 'The kick-off meeting is Monday.' },
+    { en: 'bottleneck', ru: 'узкое место', ex: 'Testing is the bottleneck.' },
+    { en: 'allocate', ru: 'распределять', ex: 'Allocate 20% to R&D.' },
+    { en: 'oversee', ru: 'контролировать', ex: 'She oversees the project.' },
+    { en: 'on track', ru: 'по плану', ex: 'The project is on track.' },
+    { en: 'delay', ru: 'задержка', ex: 'We expect a two-week delay.' },
+  ]},
+  { id: 'leadership', title: 'Руководство', emoji: '🧑‍💼', words: [
+    { en: 'delegate', ru: 'делегировать', ex: 'Good managers delegate tasks.' },
+    { en: 'empower', ru: 'давать полномочия', ex: 'Empower your team.' },
+    { en: 'mentor', ru: 'наставник', ex: 'She is my mentor.' },
+    { en: 'motivate', ru: 'мотивировать', ex: 'Bonuses motivate employees.' },
+    { en: 'vision', ru: 'видение', ex: 'The CEO shared her vision.' },
+    { en: 'strategy', ru: 'стратегия', ex: 'Our strategy is clear.' },
+    { en: 'accountability', ru: 'ответственность', ex: 'We value accountability.' },
+    { en: 'alignment', ru: 'согласованность', ex: 'We need team alignment.' },
+    { en: 'one-on-one', ru: 'личная встреча', ex: 'We have one-on-ones on Monday.' },
+    { en: 'performance', ru: 'результативность', ex: 'Her performance improved.' },
+    { en: 'initiative', ru: 'инициатива', ex: 'He took the initiative.' },
+    { en: 'culture', ru: 'культура', ex: 'Company culture matters.' },
+  ]},
+  { id: 'startups', title: 'Стартапы', emoji: '🚀', words: [
+    { en: 'startup', ru: 'стартап', ex: 'They founded a startup in 2020.' },
+    { en: 'founder', ru: 'основатель', ex: 'The founder gave an interview.' },
+    { en: 'investor', ru: 'инвестор', ex: 'We are meeting an investor.' },
+    { en: 'funding round', ru: 'раунд инвестиций', ex: 'They closed a Series A round.' },
+    { en: 'venture capital', ru: 'венчурный капитал', ex: 'VCs are cautious this year.' },
+    { en: 'seed', ru: 'посевные инвестиции', ex: 'We raised a seed round.' },
+    { en: 'pitch deck', ru: 'презентация для инвесторов', ex: 'Update the pitch deck.' },
+    { en: 'MVP', ru: 'минимальный продукт', ex: 'We launched an MVP in March.' },
+    { en: 'scale', ru: 'масштабировать', ex: 'We plan to scale globally.' },
+    { en: 'pivot', ru: 'развернуть бизнес', ex: 'We pivoted to B2B.' },
+    { en: 'runway', ru: 'запас времени', ex: 'We have 12 months of runway.' },
+    { en: 'burn rate', ru: 'скорость расходов', ex: 'Lower your burn rate.' },
+    { en: 'exit', ru: 'выход из бизнеса', ex: 'They planned an exit in 5 years.' },
+    { en: 'traction', ru: 'признание рынком', ex: 'The startup has strong traction.' },
+  ]},
+];
+
+const READING = [
+  {
+    id: 'r1', type: '✉️ Письмо', title: 'Письмо клиенту о задержке',
+    text: `Dear Mr. Campbell,
+
+I am writing to update you on the status of your order #A-4521.
+
+Unfortunately, we have encountered an unexpected delay at our supplier in Vietnam. Due to a shortage of raw materials, the shipment will arrive approximately ten days later than originally scheduled. We sincerely apologise for the inconvenience.
+
+To minimise the impact on your operations, we can offer two options:
+
+1. We can ship the first half of your order this Friday and the remainder as soon as the stock arrives.
+2. Alternatively, we can issue a 7% discount on the total invoice as compensation for the delay.
+
+Please let me know which option works best for you by Wednesday, so we can proceed accordingly.
+
+Kind regards,
+Anna Petrova
+Account Manager, Nordis Ltd.`,
+    questions: [
+      { q: 'О чём это письмо?', options: ['О повышении цены', 'О задержке поставки', 'О новом заказе'], correct: 1 },
+      { q: 'Почему произошла задержка?', options: ['Забастовка', 'Нехватка сырья у поставщика', 'Проблемы с документами'], correct: 1 },
+      { q: 'Какое второе предложение?', options: ['Скидка 7%', 'Бесплатная доставка', 'Возврат денег'], correct: 0 },
+      { q: 'До какого срока ответить клиенту?', options: ['До пятницы', 'До среды', 'До конца месяца'], correct: 1 },
+    ],
+  },
+  {
+    id: 'r2', type: '📊 Отчёт', title: 'Отчёт по продажам за квартал',
+    text: `Q3 Sales Report — Executive Summary
+
+Total revenue in Q3 reached 4.2M EUR, an increase of 12% compared to the same period last year. Growth was driven mainly by the German and Polish markets, which together contributed 41% of total sales.
+
+However, the UK market declined by 8%. The main reason appears to be increased competition from two new local providers who entered the market in July. Additionally, our average order value dropped from 540 EUR to 490 EUR, which suggests that customers are buying smaller quantities.
+
+Costs remained stable, with gross margin at 38%. Operating profit was 620K EUR.
+
+Recommendations for Q4:
+1. Launch a targeted campaign in the UK focused on customer retention.
+2. Introduce bundle offers to raise the average order value.
+3. Explore partnerships with local distributors in Germany and Poland.`,
+    questions: [
+      { q: 'Как изменилась выручка?', options: ['Упала на 12%', 'Выросла на 12%', 'Не изменилась'], correct: 1 },
+      { q: 'Что произошло в Великобритании?', options: ['Рост на 8%', 'Падение на 8%', 'Без изменений'], correct: 1 },
+      { q: 'Какая валовая маржа?', options: ['12%', '38%', '41%'], correct: 1 },
+      { q: 'Что предлагают для роста среднего чека?', options: ['Скидки', 'Bundle-предложения', 'Новых поставщиков'], correct: 1 },
+    ],
+  },
+  {
+    id: 'r3', type: '📁 Кейс', title: 'Кейс: цифровизация логистики',
+    text: `Case Study: How TransLogic Reduced Delivery Times by 30%
+
+TransLogic, a mid-sized freight company based in Rotterdam, faced a common problem: customers were complaining about late deliveries and unclear communication. In 2023, the company decided to invest 1.5M EUR in a new digital platform.
+
+The platform integrates GPS tracking, automated customer notifications and AI-based route planning. All drivers were given tablets and received two days of training. Within six months, average delivery times dropped by 30% and customer complaints fell by 62%.
+
+The biggest challenge was not technology but people. Many experienced drivers were initially sceptical and worried that the system would be used to monitor them. Management addressed this by involving drivers in the design process and by promising that data would only be used to optimise routes, not to evaluate individual performance.`,
+    questions: [
+      { q: 'Какая была основная проблема?', options: ['Высокие расходы', 'Жалобы на задержки', 'Нехватка водителей'], correct: 1 },
+      { q: 'Сколько времени заняло снижение на 30%?', options: ['Полгода', 'Год', 'Два месяца'], correct: 0 },
+      { q: 'Что оказалось главной сложностью?', options: ['Технологии', 'Люди', 'Финансирование'], correct: 1 },
+      { q: 'Каков ROI проекта?', options: ['30%', '62%', '180%'], correct: 2 },
+    ],
+  },
+  {
+    id: 'r4', type: '📄 Статья', title: 'Статья: гибридный формат работы',
+    text: `The Future of Hybrid Work
+
+After three years of remote-work experiments, most companies have settled on a hybrid model. But "hybrid" means very different things: some firms allow two remote days a week, others leave the choice entirely to the employee.
+
+Recent research from the University of Manchester suggests that the key factor is not where people work, but how clearly goals are defined. Teams with well-structured objectives report equal — and in some cases higher — productivity regardless of location.
+
+However, hybrid work does create new challenges. Junior employees often miss the informal learning that happens naturally in offices. Managers must therefore invest more time in mentoring and structured feedback.
+
+Companies that get hybrid right report lower turnover and higher employee satisfaction — a competitive advantage in a tight labour market.`,
+    questions: [
+      { q: 'Что важнее всего по исследованию?', options: ['Место работы', 'Чёткие цели', 'Количество часов'], correct: 1 },
+      { q: 'Какую проблему создаёт гибрид?', options: ['Высокие расходы', 'Потерю неформального обучения', 'Снижение скорости'], correct: 1 },
+      { q: 'Что советуют для сложных решений?', options: ['Живые встречи', 'Асинхронную переписку', 'Документы'], correct: 0 },
+      { q: 'Что получают компании с правильным гибридом?', options: ['Ниже текучесть', 'Меньше зарплаты', 'Больше офисов'], correct: 0 },
+    ],
+  },
+];
+
+const LISTENING = [
+  {
+    id: 'l1', type: '📞 Звонок', title: 'Звонок клиенту о продлении контракта',
+    text: "Hello, Mr. Harris? This is Julia from Nordis Ltd., I hope I'm not calling at a bad time. I'm calling because your current contract with us expires at the end of March. We'd love to continue working with you, and we've prepared a new offer with a 5% discount for early renewal. Could we schedule a short call next week to go over the details? Tuesday afternoon or Thursday morning would work on my side. I'll send the offer by email today.",
+    questions: [
+      { q: 'Когда истекает контракт?', options: ['В конце марта', 'В конце апреля', 'В конце года'], correct: 0 },
+      { q: 'Какая скидка предложена?', options: ['3%', '5%', '10%'], correct: 1 },
+      { q: 'Когда удобно звонящему?', options: ['Пн утро', 'Вт днём или Чт утром', 'Пт'], correct: 1 },
+      { q: 'Что пришлют по email?', options: ['Счёт', 'Оффер', 'Извинения'], correct: 1 },
+    ],
+  },
+  {
+    id: 'l2', type: '🤝 Собеседование', title: 'Собеседование на аналитика',
+    text: "Good morning, Ms. Ivanova. Thank you for coming in. I've read your CV and I'm impressed by your experience in data analysis. Could you start by telling me about a recent project you worked on? Also, I'd be interested to know which tools you're most comfortable with — SQL, Python, Tableau? Finally, could you describe a situation where you had to explain complex data to a non-technical audience?",
+    questions: [
+      { q: 'Что впечатлило интервьюера?', options: ['Образование', 'Опыт в анализе данных', 'Языки'], correct: 1 },
+      { q: 'О каких инструментах спрашивают?', options: ['Excel и Word', 'SQL, Python, Tableau', 'Photoshop'], correct: 1 },
+      { q: 'Ключевое требование?', options: ['Работа ночью', 'Умение объяснять данные неспециалистам', 'Немецкий'], correct: 1 },
+      { q: 'Чем завершают?', options: ['Оффером', 'Вопросом «есть ли вопросы»', 'Просьбой прийти завтра'], correct: 1 },
+    ],
+  },
+  {
+    id: 'l3', type: '🗣️ Планёрка', title: 'Еженедельная планёрка',
+    text: "Good morning, everyone. Let's start with the numbers. Sales are up 6% this week compared to last. Mark, could you update us on the UK campaign? Next, the product team finished the beta version and we're planning a limited launch on the fifteenth. Please note that the deadline for feedback is the tenth — that's firm. Finally, the quarterly review with the board is on Friday at ten. Everyone who owns a KPI should have their slides ready by Thursday evening.",
+    questions: [
+      { q: 'На сколько выросли продажи?', options: ['3%', '6%', '15%'], correct: 1 },
+      { q: 'Когда ограниченный запуск?', options: ['10-го', '15-го', '20-го'], correct: 1 },
+      { q: 'Крайний срок по фидбэку?', options: ['10-го', '15-го', 'Пт'], correct: 0 },
+      { q: 'Что нужно к четвергу вечеру?', options: ['Слайды', 'Отчёт', 'Список клиентов'], correct: 0 },
+    ],
+  },
+  {
+    id: 'l4', type: '⚖️ Переговоры', title: 'Переговоры о цене',
+    text: "Look, we understand the quality of your product, but frankly, 45 EUR per unit is above our budget. We're comparing three suppliers, and your competitors are offering 38 EUR with similar specs. If we commit to 10,000 units per year, could you bring the price down to 40 EUR? We can also sign a two-year contract and pay in advance for the first quarter. Those are real advantages for you.",
+    questions: [
+      { q: 'Текущая цена?', options: ['38 EUR', '40 EUR', '45 EUR'], correct: 2 },
+      { q: 'Какую цену предлагают?', options: ['38', '40', '42'], correct: 1 },
+      { q: 'Какой объём обещают?', options: ['1,000', '5,000', '10,000 в год'], correct: 2 },
+      { q: 'Дополнительное условие?', options: ['Оплата вперёд и 2-летний контракт', 'Отзыв', 'Эксклюзивность'], correct: 0 },
+    ],
+  },
+];
+
+const GRAMMAR = [
+  { q: 'I ___ never ___ to Japan.', options: ['have / been', 'has / been', 'have / went'], correct: 0, explain: 'have/has + V3' },
+  { q: 'She ___ just ___ the email.', options: ['have / sent', 'has / sent', 'has / send'], correct: 1 },
+  { q: 'We have lived here ___ 2019.', options: ['for', 'since', 'during'], correct: 1 },
+  { q: 'If it rains tomorrow, we ___ at home.', options: ['stay', 'will stay', 'stayed'], correct: 1, explain: 'if + present, will + V' },
+  { q: 'If I ___ you, I would apologise.', options: ['am', 'was', 'were'], correct: 2, explain: 'if + Past Simple, would + V' },
+  { q: 'If she had studied, she ___ the exam.', options: ['would pass', 'would have passed', 'passed'], correct: 1 },
+  { q: 'He said he ___ tired.', options: ['is', 'was', 'be'], correct: 1, explain: 'is → was в косвенной речи' },
+  { q: 'She asked me where I ___.', options: ['live', 'lived', 'do live'], correct: 1 },
+  { q: 'The book ___ in 1920.', options: ['published', 'was published', 'has published'], correct: 1 },
+  { q: 'English ___ all over the world.', options: ['speaks', 'is spoken', 'speaking'], correct: 1 },
+  { q: 'You ___ smoke here — it is forbidden.', options: ['must not', "don't have to", 'should not'], correct: 0, explain: 'must not = запрещено' },
+  { q: "It's late. We ___ go home.", options: ['should', 'may', 'could'], correct: 0 },
+  { q: 'I enjoy ___ books.', options: ['to read', 'reading', 'read'], correct: 1 },
+  { q: 'She decided ___ a new job.', options: ['finding', 'to find', 'find'], correct: 1 },
+  { q: 'I saw ___ interesting film yesterday.', options: ['a', 'an', 'the'], correct: 1 },
+  { q: '___ sun rises in the east.', options: ['A', 'An', 'The'], correct: 2 },
+  { q: 'I am good ___ maths.', options: ['in', 'at', 'on'], correct: 1 },
+  { q: 'She is interested ___ art.', options: ['in', 'at', 'on'], correct: 0 },
+  { q: 'This exercise is ___ than the previous one.', options: ['difficulter', 'more difficult', 'most difficult'], correct: 1 },
+  { q: 'He is the ___ student in the class.', options: ['best', 'better', 'goodest'], correct: 0 },
+];
+ // ============================================================
+// ХРАНИЛИЩЕ
+// ============================================================
+
+const STORAGE_KEY = 'en_b1_state_v1';
+
+function defaultState() {
+  return {
+    vocab: {},
+    streak: { count: 0, lastDay: null, best: 0 },
+    stats: { total: 0, correct: 0, byMode: {} },
+    exams: {},
+  };
+}
+
+let STATE = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const d = defaultState();
+    return {
+      ...d, ...parsed,
+      stats: { ...d.stats, ...(parsed.stats || {}) },
+      streak: { ...d.streak, ...(parsed.streak || {}) },
+    };
+  } catch { return defaultState(); }
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch {}
+}
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function touchStreak() {
+  const today = todayKey();
+  const { lastDay, count, best } = STATE.streak;
+  if (lastDay === today) return;
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  const yesterday = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  STATE.streak.count = lastDay === yesterday ? count + 1 : 1;
+  STATE.streak.lastDay = today;
+  STATE.streak.best = Math.max(best, STATE.streak.count);
+  saveState();
+}
+
+function recordAnswer(mode, ok) {
+  STATE.stats.total++;
+  if (ok) STATE.stats.correct++;
+  STATE.stats.byMode[mode] = (STATE.stats.byMode[mode] || 0) + 1;
+  touchStreak();
+  saveState();
+}
+
+// ============================================================
+// SRS
+// ============================================================
+
+const SRS_INTERVALS = [0, 1, 3, 7, 14, 30];
+const MASTER_LEVEL = 5;
+const DAY_MS = 86400000;
+
+function isDue(entry, now = Date.now()) {
+  if (!entry) return true;
+  return !entry.nextReview || entry.nextReview <= now;
+}
+
+function updateWord(entry, known, now = Date.now()) {
+  const prev = entry || { level: 0, correct: 0, wrong: 0 };
+  const level = known ? Math.min(prev.level + 1, MASTER_LEVEL) : 0;
+  const days = SRS_INTERVALS[level];
+  return {
+    level,
+    correct: (prev.correct || 0) + (known ? 1 : 0),
+    wrong: (prev.wrong || 0) + (known ? 0 : 1),
+    lastReview: now,
+    nextReview: now + days * DAY_MS,
+  };
+}
+
+function pickQueue(words, now = Date.now()) {
+  const due = [], fresh = [];
+  for (const w of words) {
+    const e = STATE.vocab[w.key];
+    if (!e) fresh.push(w);
+    else if (isDue(e, now)) due.push(w);
+  }
+  return [...due, ...fresh.slice(0, 10)];
+}
+
+function topicProgress(topic) {
+  let m = 0, l = 0, f = 0;
+  for (const w of topic.words) {
+    const lvl = STATE.vocab[topic.id + ':' + w.en]?.level ?? 0;
+    if (lvl >= MASTER_LEVEL) m++;
+    else if (lvl > 0) l++;
+    else f++;
+  }
+  return { mastered: m, learning: l, fresh: f, total: m + l + f };
+}
+
+function examGrade(score, total) {
+  const pct = total ? (score / total) * 100 : 0;
+  if (pct >= 90) return { letter: 'A', label: 'Отлично', color: '#2fae55' };
+  if (pct >= 75) return { letter: 'B', label: 'Хорошо', color: '#4aa3ff' };
+  if (pct >= 60) return { letter: 'C', label: 'Удовлетворительно', color: '#e0a800' };
+  if (pct >= 40) return { letter: 'D', label: 'Слабо', color: '#e07a2f' };
+  return { letter: 'F', label: 'Провал', color: '#e05252' };
+}
+
+function shuffle(a) {
+  const arr = [...a];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ============================================================
+// ОЗВУЧКА (Web Speech API)
+// ============================================================
+
+let voices = [];
+
+function loadVoices() {
+  voices = window.speechSynthesis?.getVoices?.() || [];
+}
+if (typeof speechSynthesis !== 'undefined') {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speak(text, rate = 0.95) {
+  if (typeof speechSynthesis === 'undefined') {
+    alert('Озвучка не поддерживается в этом браузере');
+    return;
+  }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = rate;
+  const voice = voices.find(v => v.lang.startsWith('en'));
+  if (voice) u.voice = voice;
+  speechSynthesis.speak(u);
+}
+
+function stopSpeak() { try { speechSynthesis.cancel(); } catch {} }
+
+// ============================================================
+// НАВИГАЦИЯ
+// ============================================================
+
+let currentScreen = 'home';
+let screenStack = [];
+
+const app = document.getElementById('app');
+const headerTitle = document.getElementById('screenTitle');
+const backBtn = document.getElementById('backBtn');
+
+const TITLES = {
+  home: 'Business English B1',
+  topics: 'Словарь по темам',
+  vocab: 'Словарь',
+  reading: 'Чтение',
+  readingDetail: 'Чтение',
+  listening: 'Аудирование',
+  listeningDetail: 'Аудирование',
+  grammar: 'Грамматика',
+  exams: 'Экзамены',
+  exam: 'Экзамен',
+  stats: 'Статистика',
+  topicComplete: 'Готово',
+};
+
+function navigate(screen, params = {}) {
+  if (screen !== currentScreen) screenStack.push(currentScreen);
+  currentScreen = screen;
+  backBtn.classList.toggle('show', screen !== 'home');
+  headerTitle.textContent = TITLES[screen] || 'Business English B1';
+  render(screen, params);
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === screen || 
+      (screen === 'vocab' && b.dataset.tab === 'topics') ||
+      (screen === 'exam' && b.dataset.tab === 'topics'));
+  });
+  window.scrollTo(0, 0);
+}
+
+backBtn.onclick = () => {
+  const prev = screenStack.pop() || 'home';
+  currentScreen = prev;
+  backBtn.classList.toggle('show', prev !== 'home');
+  headerTitle.textContent = TITLES[prev] || 'Business English B1';
+  render(prev, {});
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === prev);
+  });
+  window.scrollTo(0, 0);
+};
+
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    screenStack = [];
+    navigate(b.dataset.tab, {});
+  };
+});
+
+// ============================================================
+// ЭКРАН: ГЛАВНАЯ
+// ============================================================
+
+function renderHome() {
+  const { stats, streak } = STATE;
+  let total = 0, mastered = 0, learning = 0;
+  for (const t of TOPICS) {
+    const p = topicProgress(t);
+    total += p.total;
+    mastered += p.mastered;
+    learning += p.learning;
+  }
+
+  const items = [
+    { screen: 'topics', title: '📚 Словарь по темам', desc: '10 бизнес-тем + SRS' },
+    { screen: 'reading', title: '📖 Бизнес-чтение', desc: 'Письма, отчёты, кейсы' },
+    { screen: 'listening', title: '🎧 Бизнес-аудио', desc: 'Звонки, встречи, переговоры' },
+    { screen: 'grammar', title: '🧩 Грамматика', desc: '20 упражнений B1' },
+    { screen: 'exams', title: '📝 Экзамены', desc: 'По темам, оценка A–F' },
+    { screen: 'stats', title: '📊 Статистика', desc: 'Прогресс, streak, точность' },
+  ];
+
+  app.innerHTML = `
+    <div class="stats-header">
+      <div class="streak">🔥 Streak: ${streak.count} дн.</div>
+      <div class="summary">
+        Слова: ${mastered} освоено · ${learning} в работе · ${total - mastered - learning} новых
+      </div>
+    </div>
+    ${items.map(i => `
+      <div class="card tap" data-screen="${i.screen}">
+        <div class="card-title">${i.title}</div>
+        <div class="card-desc">${i.desc}</div>
+      </div>
+    `).join('')}
+  `;
+
+  app.querySelectorAll('[data-screen]').forEach(el => {
+    el.onclick = () => navigate(el.dataset.screen, {});
+  });
+}
+
+// ============================================================
+// ЭКРАН: СПИСОК ТЕМ
+// ============================================================
+
+function renderTopics() {
+  app.innerHTML = TOPICS.map(t => {
+    const p = topicProgress(t);
+    const pct = Math.round((p.mastered / p.total) * 100);
+    const ready = (p.mastered + p.learning) / p.total >= 0.6;
+    const exam = STATE.exams[t.id];
+    return `
+      <div class="card">
+        <div class="card-row" data-topic="${t.id}">
+          <div style="flex:1">
+            <div class="card-title">${t.emoji} ${t.title}</div>
+            <div class="card-desc">🟢 ${p.mastered} · 🟡 ${p.learning} · ⚪ ${p.fresh} из ${p.total}</div>
+          </div>
+          <div style="font-weight:700;color:var(--blue)">${pct}%</div>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <button class="btn ${ready ? '' : 'secondary'}" data-exam="${t.id}" ${ready ? '' : 'disabled'} style="margin-top:12px">
+          ${ready ? '📝 Пройти экзамен' : '🔒 Нужно 60% слов'}
+        </button>
+        ${exam ? `<div class="muted" style="text-align:center;margin-top:8px">Лучший: ${exam.best}/10 · попыток: ${exam.attempts}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  app.querySelectorAll('[data-topic]').forEach(el => {
+    el.onclick = () => navigate('vocab', { topicId: el.dataset.topic });
+  });
+  app.querySelectorAll('[data-exam]').forEach(el => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if (!el.disabled) navigate('exam', { topicId: el.dataset.exam });
+    };
+  });
+}
+
+// ============================================================
+// ЭКРАН: КАРТОЧКИ СЛОВ
+// ============================================================
+
+let vocabSession = null;
+
+function renderVocab(params) {
+  const topic = TOPICS.find(t => t.id === params.topicId);
+  if (!topic) { navigate('topics', {}); return; }
+  headerTitle.textContent = topic.emoji + ' ' + topic.title;
+
+  const words = topic.words.map(w => ({
+    ...w,
+    key: topic.id + ':' + w.en,
+    topicEmoji: topic.emoji,
+  }));
+  const queue = pickQueue(words);
+
+  if (!queue.length) {
+    vocabSession = null;
+    app.innerHTML = `
+      <div class="center">
+        <div style="font-size:60px">🎉</div>
+        <h2 style="margin-top:12px">Всё повторено!</h2>
+        <p class="muted" style="margin-top:8px">Возвращайся, когда наступит время повторения.</p>
+        <button class="btn" onclick="navigate('topics',{})">К темам</button>
+      </div>
+    `;
+    return;
+  }
+
+  vocabSession = { topicId: topic.id, queue, idx: 0, showBack: false, correct: 0, wrong: 0 };
+  drawVocabCard();
+}
+
+function drawVocabCard() {
+  const s = vocabSession;
+  if (!s) return;
+  if (s.idx >= s.queue.length) return finishVocab();
+  const w = s.queue[s.idx];
+  const lvl = STATE.vocab[w.key]?.level ?? 0;
+
+  app.innerHTML = `
+    <div class="muted" style="margin-bottom:10px;font-size:13px">
+      ${s.idx + 1} / ${s.queue.length} · уровень ${lvl}/5
+    </div>
+
+    <div class="word-card">
+      <div class="word-en">${w.en}</div>
+      <button class="speak-btn" id="speakWord">🔊 Произнести</button>
+      ${s.showBack ? `
+        <div class="word-ru">${w.ru}</div>
+        <div class="word-ex">${w.ex}</div>
+      ` : ''}
+    </div>
+
+    ${!s.showBack ? `
+      <button class="btn" id="showBtn">Показать перевод</button>
+    ` : `
+      <div class="btn-row">
+        <button class="btn red" id="noBtn">Не знаю</button>
+        <button class="btn green" id="yesBtn">Знаю</button>
+      </div>
+    `}
+  `;
+
+  document.getElementById('speakWord').onclick = () => speak(w.en);
+  if (!s.showBack) {
+    document.getElementById('showBtn').onclick = () => {
+      s.showBack = true;
+      speak(w.en);
+      drawVocabCard();
+    };
+  } else {
+    document.getElementById('noBtn').onclick = () => answerWord(false);
+    document.getElementById('yesBtn').onclick = () => answerWord(true);
+  }
+}
+
+function answerWord(known) {
+  const s = vocabSession;
+  const w = s.queue[s.idx];
+  STATE.vocab[w.key] = updateWord(STATE.vocab[w.key], known);
+  recordAnswer('vocab', known);
+  if (known) s.correct++; else s.wrong++;
+  s.idx++;
+  s.showBack = false;
+  drawVocabCard();
+}
+
+function finishVocab() {
+  const s = vocabSession;
+  const total = s.correct + s.wrong;
+  const acc = total ? Math.round(s.correct / total * 100) : 0;
+  vocabSession = null;
+  app.innerHTML = `
+    <div class="center">
+      <div style="font-size:60px">🎉</div>
+      <h2 style="margin-top:12px">Сессия завершена!</h2>
+      <p class="muted" style="margin-top:8px">Правильно: ${s.correct} / ${total} (${acc}%)</p>
+      <button class="btn" onclick="navigate('topics',{})">К темам</button>
+    </div>
+  `;
+}
+ // ============================================================
 // ЭКРАН: СПИСОК ЧТЕНИЯ
 // ============================================================
 
@@ -880,710 +1588,6 @@ window.addEventListener('load', () => {
   }, 600);
   renderHome();
 });
-<script>
-// === КОД ДОБАВИТСЯ В ЧАСТЯХ 2–4 ===
-// ============================================================
-// ДАННЫЕ
-// ============================================================
-
-const TOPICS = [
-  { id: 'meetings', title: 'Встречи и переговоры', emoji: '🤝', words: [
-    { en: 'agenda', ru: 'повестка дня', ex: "Let's go through the agenda." },
-    { en: 'minutes', ru: 'протокол встречи', ex: 'Who is taking the minutes?' },
-    { en: 'negotiate', ru: 'вести переговоры', ex: 'We need to negotiate the price.' },
-    { en: 'compromise', ru: 'компромисс', ex: 'We reached a compromise.' },
-    { en: 'follow up', ru: 'напоминать, следить', ex: "I'll follow up next week." },
-    { en: 'stakeholder', ru: 'заинтересованная сторона', ex: 'The stakeholders approved the plan.' },
-    { en: 'consensus', ru: 'консенсус', ex: 'We finally reached a consensus.' },
-    { en: 'proposal', ru: 'предложение', ex: 'The proposal looks promising.' },
-    { en: 'outcome', ru: 'результат', ex: 'What was the outcome?' },
-    { en: 'postpone', ru: 'откладывать', ex: "Let's postpone the meeting." },
-    { en: 'sum up', ru: 'подводить итог', ex: 'Let me sum up the points.' },
-    { en: 'bottom line', ru: 'суть, итог', ex: "Bottom line is we're over budget." },
-  ]},
-  { id: 'emails', title: 'Email и переписка', emoji: '📧', words: [
-    { en: 'attach', ru: 'прикреплять', ex: 'I have attached the report.' },
-    { en: 'forward', ru: 'переслать', ex: 'Please forward this to the team.' },
-    { en: 'recipient', ru: 'получатель', ex: 'The recipient did not respond.' },
-    { en: 'subject line', ru: 'тема письма', ex: 'Use a clear subject line.' },
-    { en: 'regarding', ru: 'касательно', ex: 'I am writing regarding your offer.' },
-    { en: 'apologise', ru: 'извиняться', ex: 'I apologise for the delay.' },
-    { en: 'clarify', ru: 'уточнять', ex: 'Could you clarify this point?' },
-    { en: 'enclose', ru: 'вкладывать', ex: 'I enclose the signed contract.' },
-    { en: 'confirm', ru: 'подтверждать', ex: 'Please confirm the meeting time.' },
-    { en: 'reminder', ru: 'напоминание', ex: 'This is a friendly reminder.' },
-    { en: 'draft', ru: 'черновик', ex: 'I will send you a draft first.' },
-  ]},
-  { id: 'finance', title: 'Финансы и учёт', emoji: '💵', words: [
-    { en: 'revenue', ru: 'выручка', ex: 'Our revenue grew by 20%.' },
-    { en: 'profit', ru: 'прибыль', ex: 'We made a good profit.' },
-    { en: 'loss', ru: 'убыток', ex: 'The company reported a loss.' },
-    { en: 'budget', ru: 'бюджет', ex: 'The budget is tight this quarter.' },
-    { en: 'invoice', ru: 'счёт-фактура', ex: 'Please pay the invoice by Friday.' },
-    { en: 'expense', ru: 'расход', ex: 'Travel expenses are covered.' },
-    { en: 'quarter', ru: 'квартал', ex: 'We report every quarter.' },
-    { en: 'forecast', ru: 'прогноз', ex: 'The sales forecast looks good.' },
-    { en: 'audit', ru: 'аудит', ex: 'The annual audit starts Monday.' },
-    { en: 'cash flow', ru: 'движение денег', ex: 'We need to manage cash flow.' },
-    { en: 'asset', ru: 'актив', ex: 'Real estate is a valuable asset.' },
-    { en: 'liability', ru: 'обязательство', ex: 'Loans are a liability.' },
-    { en: 'shareholder', ru: 'акционер', ex: 'Shareholders approved the deal.' },
-    { en: 'dividend', ru: 'дивиденды', ex: 'Dividends are paid quarterly.' },
-  ]},
-  { id: 'marketing', title: 'Маркетинг и продажи', emoji: '📈', words: [
-    { en: 'target audience', ru: 'целевая аудитория', ex: 'Our target audience is young professionals.' },
-    { en: 'campaign', ru: 'кампания', ex: 'The campaign was a success.' },
-    { en: 'brand awareness', ru: 'узнаваемость бренда', ex: 'We want to raise brand awareness.' },
-    { en: 'lead', ru: 'потенциальный клиент', ex: 'We generated 200 new leads.' },
-    { en: 'conversion', ru: 'конверсия', ex: 'Our conversion rate is 3%.' },
-    { en: 'launch', ru: 'запускать', ex: 'We launch the product in May.' },
-    { en: 'competitor', ru: 'конкурент', ex: 'Our competitors lowered prices.' },
-    { en: 'market share', ru: 'доля рынка', ex: 'We gained 5% market share.' },
-    { en: 'promotion', ru: 'акция, продвижение', ex: 'We run a winter promotion.' },
-    { en: 'pitch', ru: 'презентация идеи', ex: 'She gave a great sales pitch.' },
-    { en: 'upsell', ru: 'продавать дороже', ex: 'Try to upsell the premium plan.' },
-    { en: 'feedback', ru: 'обратная связь', ex: 'We collect customer feedback.' },
-    { en: 'reach', ru: 'охват', ex: 'The ad reached 1M people.' },
-  ]},
-  { id: 'hr', title: 'HR и найм', emoji: '👥', words: [
-    { en: 'hire', ru: 'нанимать', ex: 'We hired two new developers.' },
-    { en: 'candidate', ru: 'кандидат', ex: 'The candidate has strong skills.' },
-    { en: 'CV', ru: 'резюме', ex: 'Send your CV to HR.' },
-    { en: 'interview', ru: 'собеседование', ex: 'The interview lasted an hour.' },
-    { en: 'onboarding', ru: 'адаптация', ex: 'Onboarding takes two weeks.' },
-    { en: 'probation period', ru: 'испытательный срок', ex: 'Probation is three months.' },
-    { en: 'resignation', ru: 'увольнение по собственному', ex: 'She handed in her resignation.' },
-    { en: 'layoff', ru: 'сокращение', ex: 'The layoffs affected 50 people.' },
-    { en: 'benefits', ru: 'льготы', ex: 'The benefits include insurance.' },
-    { en: 'appraisal', ru: 'аттестация', ex: 'The annual appraisal is in December.' },
-    { en: 'team player', ru: 'командный игрок', ex: 'We look for team players.' },
-    { en: 'workload', ru: 'нагрузка', ex: 'My workload is heavy this week.' },
-    { en: 'promotion', ru: 'повышение', ex: 'He got a promotion to manager.' },
-    { en: 'turnover', ru: 'текучесть кадров', ex: 'Staff turnover is high.' },
-  ]},
-  { id: 'presentations', title: 'Презентации', emoji: '🎤', words: [
-    { en: 'slide', ru: 'слайд', ex: 'Move to the next slide, please.' },
-    { en: 'overview', ru: 'обзор', ex: 'Here is a quick overview.' },
-    { en: 'highlight', ru: 'подчёркивать', ex: 'I want to highlight three points.' },
-    { en: 'key takeaway', ru: 'главный вывод', ex: 'The key takeaway is simplicity.' },
-    { en: 'elaborate', ru: 'пояснять', ex: 'Could you elaborate on that?' },
-    { en: 'audience', ru: 'аудитория', ex: 'The audience asked questions.' },
-    { en: 'visual aid', ru: 'наглядное пособие', ex: 'Charts are useful visual aids.' },
-    { en: 'rehearse', ru: 'репетировать', ex: 'Rehearse your speech twice.' },
-    { en: 'wrap up', ru: 'завершать', ex: 'Let me wrap up with a summary.' },
-    { en: 'handout', ru: 'раздаточный материал', ex: 'There is a handout on your seat.' },
-    { en: 'body language', ru: 'язык тела', ex: 'Good body language matters.' },
-    { en: 'confident', ru: 'уверенный', ex: 'She gave a confident talk.' },
-  ]},
-  { id: 'legal', title: 'Контракты и право', emoji: '📄', words: [
-    { en: 'contract', ru: 'договор', ex: 'Sign the contract by Friday.' },
-    { en: 'clause', ru: 'пункт договора', ex: 'Check clause 5 carefully.' },
-    { en: 'terms and conditions', ru: 'условия', ex: 'Read the terms and conditions.' },
-    { en: 'party', ru: 'сторона', ex: 'Both parties agree.' },
-    { en: 'breach', ru: 'нарушение', ex: 'This is a breach of contract.' },
-    { en: 'liability', ru: 'ответственность', ex: 'We limit our liability.' },
-    { en: 'confidential', ru: 'конфиденциальный', ex: 'Keep this information confidential.' },
-    { en: 'compliance', ru: 'соответствие', ex: 'Compliance is mandatory.' },
-    { en: 'intellectual property', ru: 'интеллектуальная собственность', ex: 'Protect your intellectual property.' },
-    { en: 'dispute', ru: 'спор', ex: 'We resolved the dispute quickly.' },
-    { en: 'arbitration', ru: 'арбитраж', ex: 'Disputes go to arbitration.' },
-    { en: 'terminate', ru: 'расторгать', ex: 'Either party may terminate.' },
-    { en: 'warranty', ru: 'гарантия', ex: 'The warranty covers two years.' },
-    { en: 'amend', ru: 'вносить изменения', ex: 'We need to amend the agreement.' },
-  ]},
-  { id: 'projects', title: 'Проекты', emoji: '🗂️', words: [
-    { en: 'milestone', ru: 'этап, веха', ex: 'We reached the first milestone.' },
-    { en: 'deliverable', ru: 'результат проекта', ex: 'The deliverable is due Friday.' },
-    { en: 'scope', ru: 'объём работ', ex: 'The scope has changed.' },
-    { en: 'resource', ru: 'ресурс', ex: 'We lack resources for this.' },
-    { en: 'timeline', ru: 'график', ex: 'The timeline is tight.' },
-    { en: 'risk', ru: 'риск', ex: 'We identified three main risks.' },
-    { en: 'backlog', ru: 'список задач', ex: 'The backlog is getting long.' },
-    { en: 'sprint', ru: 'спринт', ex: 'Sprint review is on Thursday.' },
-    { en: 'kick-off', ru: 'старт проекта', ex: 'The kick-off meeting is Monday.' },
-    { en: 'bottleneck', ru: 'узкое место', ex: 'Testing is the bottleneck.' },
-    { en: 'allocate', ru: 'распределять', ex: 'Allocate 20% to R&D.' },
-    { en: 'oversee', ru: 'контролировать', ex: 'She oversees the project.' },
-    { en: 'on track', ru: 'по плану', ex: 'The project is on track.' },
-    { en: 'delay', ru: 'задержка', ex: 'We expect a two-week delay.' },
-  ]},
-  { id: 'leadership', title: 'Руководство', emoji: '🧑‍💼', words: [
-    { en: 'delegate', ru: 'делегировать', ex: 'Good managers delegate tasks.' },
-    { en: 'empower', ru: 'давать полномочия', ex: 'Empower your team.' },
-    { en: 'mentor', ru: 'наставник', ex: 'She is my mentor.' },
-    { en: 'motivate', ru: 'мотивировать', ex: 'Bonuses motivate employees.' },
-    { en: 'vision', ru: 'видение', ex: 'The CEO shared her vision.' },
-    { en: 'strategy', ru: 'стратегия', ex: 'Our strategy is clear.' },
-    { en: 'accountability', ru: 'ответственность', ex: 'We value accountability.' },
-    { en: 'alignment', ru: 'согласованность', ex: 'We need team alignment.' },
-    { en: 'one-on-one', ru: 'личная встреча', ex: 'We have one-on-ones on Monday.' },
-    { en: 'performance', ru: 'результативность', ex: 'Her performance improved.' },
-    { en: 'initiative', ru: 'инициатива', ex: 'He took the initiative.' },
-    { en: 'culture', ru: 'культура', ex: 'Company culture matters.' },
-  ]},
-  { id: 'startups', title: 'Стартапы', emoji: '🚀', words: [
-    { en: 'startup', ru: 'стартап', ex: 'They founded a startup in 2020.' },
-    { en: 'founder', ru: 'основатель', ex: 'The founder gave an interview.' },
-    { en: 'investor', ru: 'инвестор', ex: 'We are meeting an investor.' },
-    { en: 'funding round', ru: 'раунд инвестиций', ex: 'They closed a Series A round.' },
-    { en: 'venture capital', ru: 'венчурный капитал', ex: 'VCs are cautious this year.' },
-    { en: 'seed', ru: 'посевные инвестиции', ex: 'We raised a seed round.' },
-    { en: 'pitch deck', ru: 'презентация для инвесторов', ex: 'Update the pitch deck.' },
-    { en: 'MVP', ru: 'минимальный продукт', ex: 'We launched an MVP in March.' },
-    { en: 'scale', ru: 'масштабировать', ex: 'We plan to scale globally.' },
-    { en: 'pivot', ru: 'развернуть бизнес', ex: 'We pivoted to B2B.' },
-    { en: 'runway', ru: 'запас времени', ex: 'We have 12 months of runway.' },
-    { en: 'burn rate', ru: 'скорость расходов', ex: 'Lower your burn rate.' },
-    { en: 'exit', ru: 'выход из бизнеса', ex: 'They planned an exit in 5 years.' },
-    { en: 'traction', ru: 'признание рынком', ex: 'The startup has strong traction.' },
-  ]},
-];
-
-const READING = [
-  {
-    id: 'r1', type: '✉️ Письмо', title: 'Письмо клиенту о задержке',
-    text: `Dear Mr. Campbell,
-
-I am writing to update you on the status of your order #A-4521.
-
-Unfortunately, we have encountered an unexpected delay at our supplier in Vietnam. Due to a shortage of raw materials, the shipment will arrive approximately ten days later than originally scheduled. We sincerely apologise for the inconvenience.
-
-To minimise the impact on your operations, we can offer two options:
-
-1. We can ship the first half of your order this Friday and the remainder as soon as the stock arrives.
-2. Alternatively, we can issue a 7% discount on the total invoice as compensation for the delay.
-
-Please let me know which option works best for you by Wednesday, so we can proceed accordingly.
-
-Kind regards,
-Anna Petrova
-Account Manager, Nordis Ltd.`,
-    questions: [
-      { q: 'О чём это письмо?', options: ['О повышении цены', 'О задержке поставки', 'О новом заказе'], correct: 1 },
-      { q: 'Почему произошла задержка?', options: ['Забастовка', 'Нехватка сырья у поставщика', 'Проблемы с документами'], correct: 1 },
-      { q: 'Какое второе предложение?', options: ['Скидка 7%', 'Бесплатная доставка', 'Возврат денег'], correct: 0 },
-      { q: 'До какого срока ответить клиенту?', options: ['До пятницы', 'До среды', 'До конца месяца'], correct: 1 },
-    ],
-  },
-  {
-    id: 'r2', type: '📊 Отчёт', title: 'Отчёт по продажам за квартал',
-    text: `Q3 Sales Report — Executive Summary
-
-Total revenue in Q3 reached 4.2M EUR, an increase of 12% compared to the same period last year. Growth was driven mainly by the German and Polish markets, which together contributed 41% of total sales.
-
-However, the UK market declined by 8%. The main reason appears to be increased competition from two new local providers who entered the market in July. Additionally, our average order value dropped from 540 EUR to 490 EUR, which suggests that customers are buying smaller quantities.
-
-Costs remained stable, with gross margin at 38%. Operating profit was 620K EUR.
-
-Recommendations for Q4:
-1. Launch a targeted campaign in the UK focused on customer retention.
-2. Introduce bundle offers to raise the average order value.
-3. Explore partnerships with local distributors in Germany and Poland.`,
-    questions: [
-      { q: 'Как изменилась выручка?', options: ['Упала на 12%', 'Выросла на 12%', 'Не изменилась'], correct: 1 },
-      { q: 'Что произошло в Великобритании?', options: ['Рост на 8%', 'Падение на 8%', 'Без изменений'], correct: 1 },
-      { q: 'Какая валовая маржа?', options: ['12%', '38%', '41%'], correct: 1 },
-      { q: 'Что предлагают для роста среднего чека?', options: ['Скидки', 'Bundle-предложения', 'Новых поставщиков'], correct: 1 },
-    ],
-  },
-  {
-    id: 'r3', type: '📁 Кейс', title: 'Кейс: цифровизация логистики',
-    text: `Case Study: How TransLogic Reduced Delivery Times by 30%
-
-TransLogic, a mid-sized freight company based in Rotterdam, faced a common problem: customers were complaining about late deliveries and unclear communication. In 2023, the company decided to invest 1.5M EUR in a new digital platform.
-
-The platform integrates GPS tracking, automated customer notifications and AI-based route planning. All drivers were given tablets and received two days of training. Within six months, average delivery times dropped by 30% and customer complaints fell by 62%.
-
-The biggest challenge was not technology but people. Many experienced drivers were initially sceptical and worried that the system would be used to monitor them. Management addressed this by involving drivers in the design process and by promising that data would only be used to optimise routes, not to evaluate individual performance.`,
-    questions: [
-      { q: 'Какая была основная проблема?', options: ['Высокие расходы', 'Жалобы на задержки', 'Нехватка водителей'], correct: 1 },
-      { q: 'Сколько времени заняло снижение на 30%?', options: ['Полгода', 'Год', 'Два месяца'], correct: 0 },
-      { q: 'Что оказалось главной сложностью?', options: ['Технологии', 'Люди', 'Финансирование'], correct: 1 },
-      { q: 'Каков ROI проекта?', options: ['30%', '62%', '180%'], correct: 2 },
-    ],
-  },
-  {
-    id: 'r4', type: '📄 Статья', title: 'Статья: гибридный формат работы',
-    text: `The Future of Hybrid Work
-
-After three years of remote-work experiments, most companies have settled on a hybrid model. But "hybrid" means very different things: some firms allow two remote days a week, others leave the choice entirely to the employee.
-
-Recent research from the University of Manchester suggests that the key factor is not where people work, but how clearly goals are defined. Teams with well-structured objectives report equal — and in some cases higher — productivity regardless of location.
-
-However, hybrid work does create new challenges. Junior employees often miss the informal learning that happens naturally in offices. Managers must therefore invest more time in mentoring and structured feedback.
-
-Companies that get hybrid right report lower turnover and higher employee satisfaction — a competitive advantage in a tight labour market.`,
-    questions: [
-      { q: 'Что важнее всего по исследованию?', options: ['Место работы', 'Чёткие цели', 'Количество часов'], correct: 1 },
-      { q: 'Какую проблему создаёт гибрид?', options: ['Высокие расходы', 'Потерю неформального обучения', 'Снижение скорости'], correct: 1 },
-      { q: 'Что советуют для сложных решений?', options: ['Живые встречи', 'Асинхронную переписку', 'Документы'], correct: 0 },
-      { q: 'Что получают компании с правильным гибридом?', options: ['Ниже текучесть', 'Меньше зарплаты', 'Больше офисов'], correct: 0 },
-    ],
-  },
-];
-
-const LISTENING = [
-  {
-    id: 'l1', type: '📞 Звонок', title: 'Звонок клиенту о продлении контракта',
-    text: "Hello, Mr. Harris? This is Julia from Nordis Ltd., I hope I'm not calling at a bad time. I'm calling because your current contract with us expires at the end of March. We'd love to continue working with you, and we've prepared a new offer with a 5% discount for early renewal. Could we schedule a short call next week to go over the details? Tuesday afternoon or Thursday morning would work on my side. I'll send the offer by email today.",
-    questions: [
-      { q: 'Когда истекает контракт?', options: ['В конце марта', 'В конце апреля', 'В конце года'], correct: 0 },
-      { q: 'Какая скидка предложена?', options: ['3%', '5%', '10%'], correct: 1 },
-      { q: 'Когда удобно звонящему?', options: ['Пн утро', 'Вт днём или Чт утром', 'Пт'], correct: 1 },
-      { q: 'Что пришлют по email?', options: ['Счёт', 'Оффер', 'Извинения'], correct: 1 },
-    ],
-  },
-  {
-    id: 'l2', type: '🤝 Собеседование', title: 'Собеседование на аналитика',
-    text: "Good morning, Ms. Ivanova. Thank you for coming in. I've read your CV and I'm impressed by your experience in data analysis. Could you start by telling me about a recent project you worked on? Also, I'd be interested to know which tools you're most comfortable with — SQL, Python, Tableau? Finally, could you describe a situation where you had to explain complex data to a non-technical audience?",
-    questions: [
-      { q: 'Что впечатлило интервьюера?', options: ['Образование', 'Опыт в анализе данных', 'Языки'], correct: 1 },
-      { q: 'О каких инструментах спрашивают?', options: ['Excel и Word', 'SQL, Python, Tableau', 'Photoshop'], correct: 1 },
-      { q: 'Ключевое требование?', options: ['Работа ночью', 'Умение объяснять данные неспециалистам', 'Немецкий'], correct: 1 },
-      { q: 'Чем завершают?', options: ['Оффером', 'Вопросом «есть ли вопросы»', 'Просьбой прийти завтра'], correct: 1 },
-    ],
-  },
-  {
-    id: 'l3', type: '🗣️ Планёрка', title: 'Еженедельная планёрка',
-    text: "Good morning, everyone. Let's start with the numbers. Sales are up 6% this week compared to last. Mark, could you update us on the UK campaign? Next, the product team finished the beta version and we're planning a limited launch on the fifteenth. Please note that the deadline for feedback is the tenth — that's firm. Finally, the quarterly review with the board is on Friday at ten. Everyone who owns a KPI should have their slides ready by Thursday evening.",
-    questions: [
-      { q: 'На сколько выросли продажи?', options: ['3%', '6%', '15%'], correct: 1 },
-      { q: 'Когда ограниченный запуск?', options: ['10-го', '15-го', '20-го'], correct: 1 },
-      { q: 'Крайний срок по фидбэку?', options: ['10-го', '15-го', 'Пт'], correct: 0 },
-      { q: 'Что нужно к четвергу вечеру?', options: ['Слайды', 'Отчёт', 'Список клиентов'], correct: 0 },
-    ],
-  },
-  {
-    id: 'l4', type: '⚖️ Переговоры', title: 'Переговоры о цене',
-    text: "Look, we understand the quality of your product, but frankly, 45 EUR per unit is above our budget. We're comparing three suppliers, and your competitors are offering 38 EUR with similar specs. If we commit to 10,000 units per year, could you bring the price down to 40 EUR? We can also sign a two-year contract and pay in advance for the first quarter. Those are real advantages for you.",
-    questions: [
-      { q: 'Текущая цена?', options: ['38 EUR', '40 EUR', '45 EUR'], correct: 2 },
-      { q: 'Какую цену предлагают?', options: ['38', '40', '42'], correct: 1 },
-      { q: 'Какой объём обещают?', options: ['1,000', '5,000', '10,000 в год'], correct: 2 },
-      { q: 'Дополнительное условие?', options: ['Оплата вперёд и 2-летний контракт', 'Отзыв', 'Эксклюзивность'], correct: 0 },
-    ],
-  },
-];
-
-const GRAMMAR = [
-  { q: 'I ___ never ___ to Japan.', options: ['have / been', 'has / been', 'have / went'], correct: 0, explain: 'have/has + V3' },
-  { q: 'She ___ just ___ the email.', options: ['have / sent', 'has / sent', 'has / send'], correct: 1 },
-  { q: 'We have lived here ___ 2019.', options: ['for', 'since', 'during'], correct: 1 },
-  { q: 'If it rains tomorrow, we ___ at home.', options: ['stay', 'will stay', 'stayed'], correct: 1, explain: 'if + present, will + V' },
-  { q: 'If I ___ you, I would apologise.', options: ['am', 'was', 'were'], correct: 2, explain: 'if + Past Simple, would + V' },
-  { q: 'If she had studied, she ___ the exam.', options: ['would pass', 'would have passed', 'passed'], correct: 1 },
-  { q: 'He said he ___ tired.', options: ['is', 'was', 'be'], correct: 1, explain: 'is → was в косвенной речи' },
-  { q: 'She asked me where I ___.', options: ['live', 'lived', 'do live'], correct: 1 },
-  { q: 'The book ___ in 1920.', options: ['published', 'was published', 'has published'], correct: 1 },
-  { q: 'English ___ all over the world.', options: ['speaks', 'is spoken', 'speaking'], correct: 1 },
-  { q: 'You ___ smoke here — it is forbidden.', options: ['must not', "don't have to", 'should not'], correct: 0, explain: 'must not = запрещено' },
-  { q: "It's late. We ___ go home.", options: ['should', 'may', 'could'], correct: 0 },
-  { q: 'I enjoy ___ books.', options: ['to read', 'reading', 'read'], correct: 1 },
-  { q: 'She decided ___ a new job.', options: ['finding', 'to find', 'find'], correct: 1 },
-  { q: 'I saw ___ interesting film yesterday.', options: ['a', 'an', 'the'], correct: 1 },
-  { q: '___ sun rises in the east.', options: ['A', 'An', 'The'], correct: 2 },
-  { q: 'I am good ___ maths.', options: ['in', 'at', 'on'], correct: 1 },
-  { q: 'She is interested ___ art.', options: ['in', 'at', 'on'], correct: 0 },
-  { q: 'This exercise is ___ than the previous one.', options: ['difficulter', 'more difficult', 'most difficult'], correct: 1 },
-  { q: 'He is the ___ student in the class.', options: ['best', 'better', 'goodest'], correct: 0 },
-];
-// ============================================================
-// ХРАНИЛИЩЕ
-// ============================================================
-
-const STORAGE_KEY = 'en_b1_state_v1';
-
-function defaultState() {
-  return {
-    vocab: {},
-    streak: { count: 0, lastDay: null, best: 0 },
-    stats: { total: 0, correct: 0, byMode: {} },
-    exams: {},
-  };
-}
-
-let STATE = loadState();
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    const d = defaultState();
-    return {
-      ...d, ...parsed,
-      stats: { ...d.stats, ...(parsed.stats || {}) },
-      streak: { ...d.streak, ...(parsed.streak || {}) },
-    };
-  } catch { return defaultState(); }
-}
-
-function saveState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); } catch {}
-}
-
-function todayKey() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-function touchStreak() {
-  const today = todayKey();
-  const { lastDay, count, best } = STATE.streak;
-  if (lastDay === today) return;
-  const d = new Date(); d.setDate(d.getDate() - 1);
-  const yesterday = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  STATE.streak.count = lastDay === yesterday ? count + 1 : 1;
-  STATE.streak.lastDay = today;
-  STATE.streak.best = Math.max(best, STATE.streak.count);
-  saveState();
-}
-
-function recordAnswer(mode, ok) {
-  STATE.stats.total++;
-  if (ok) STATE.stats.correct++;
-  STATE.stats.byMode[mode] = (STATE.stats.byMode[mode] || 0) + 1;
-  touchStreak();
-  saveState();
-}
-
-// ============================================================
-// SRS
-// ============================================================
-
-const SRS_INTERVALS = [0, 1, 3, 7, 14, 30];
-const MASTER_LEVEL = 5;
-const DAY_MS = 86400000;
-
-function isDue(entry, now = Date.now()) {
-  if (!entry) return true;
-  return !entry.nextReview || entry.nextReview <= now;
-}
-
-function updateWord(entry, known, now = Date.now()) {
-  const prev = entry || { level: 0, correct: 0, wrong: 0 };
-  const level = known ? Math.min(prev.level + 1, MASTER_LEVEL) : 0;
-  const days = SRS_INTERVALS[level];
-  return {
-    level,
-    correct: (prev.correct || 0) + (known ? 1 : 0),
-    wrong: (prev.wrong || 0) + (known ? 0 : 1),
-    lastReview: now,
-    nextReview: now + days * DAY_MS,
-  };
-}
-
-function pickQueue(words, now = Date.now()) {
-  const due = [], fresh = [];
-  for (const w of words) {
-    const e = STATE.vocab[w.key];
-    if (!e) fresh.push(w);
-    else if (isDue(e, now)) due.push(w);
-  }
-  return [...due, ...fresh.slice(0, 10)];
-}
-
-function topicProgress(topic) {
-  let m = 0, l = 0, f = 0;
-  for (const w of topic.words) {
-    const lvl = STATE.vocab[topic.id + ':' + w.en]?.level ?? 0;
-    if (lvl >= MASTER_LEVEL) m++;
-    else if (lvl > 0) l++;
-    else f++;
-  }
-  return { mastered: m, learning: l, fresh: f, total: m + l + f };
-}
-
-function examGrade(score, total) {
-  const pct = total ? (score / total) * 100 : 0;
-  if (pct >= 90) return { letter: 'A', label: 'Отлично', color: '#2fae55' };
-  if (pct >= 75) return { letter: 'B', label: 'Хорошо', color: '#4aa3ff' };
-  if (pct >= 60) return { letter: 'C', label: 'Удовлетворительно', color: '#e0a800' };
-  if (pct >= 40) return { letter: 'D', label: 'Слабо', color: '#e07a2f' };
-  return { letter: 'F', label: 'Провал', color: '#e05252' };
-}
-
-function shuffle(a) {
-  const arr = [...a];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-// ============================================================
-// ОЗВУЧКА (Web Speech API)
-// ============================================================
-
-let voices = [];
-
-function loadVoices() {
-  voices = window.speechSynthesis?.getVoices?.() || [];
-}
-if (typeof speechSynthesis !== 'undefined') {
-  loadVoices();
-  speechSynthesis.onvoiceschanged = loadVoices;
-}
-
-function speak(text, rate = 0.95) {
-  if (typeof speechSynthesis === 'undefined') {
-    alert('Озвучка не поддерживается в этом браузере');
-    return;
-  }
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US';
-  u.rate = rate;
-  const voice = voices.find(v => v.lang.startsWith('en'));
-  if (voice) u.voice = voice;
-  speechSynthesis.speak(u);
-}
-
-function stopSpeak() { try { speechSynthesis.cancel(); } catch {} }
-
-// ============================================================
-// НАВИГАЦИЯ
-// ============================================================
-
-let currentScreen = 'home';
-let screenStack = [];
-
-const app = document.getElementById('app');
-const headerTitle = document.getElementById('screenTitle');
-const backBtn = document.getElementById('backBtn');
-
-const TITLES = {
-  home: 'Business English B1',
-  topics: 'Словарь по темам',
-  vocab: 'Словарь',
-  reading: 'Чтение',
-  readingDetail: 'Чтение',
-  listening: 'Аудирование',
-  listeningDetail: 'Аудирование',
-  grammar: 'Грамматика',
-  exams: 'Экзамены',
-  exam: 'Экзамен',
-  stats: 'Статистика',
-  topicComplete: 'Готово',
-};
-
-function navigate(screen, params = {}) {
-  if (screen !== currentScreen) screenStack.push(currentScreen);
-  currentScreen = screen;
-  backBtn.classList.toggle('show', screen !== 'home');
-  headerTitle.textContent = TITLES[screen] || 'Business English B1';
-  render(screen, params);
-  document.querySelectorAll('nav button').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === screen || 
-      (screen === 'vocab' && b.dataset.tab === 'topics') ||
-      (screen === 'exam' && b.dataset.tab === 'topics'));
-  });
-  window.scrollTo(0, 0);
-}
-
-backBtn.onclick = () => {
-  const prev = screenStack.pop() || 'home';
-  currentScreen = prev;
-  backBtn.classList.toggle('show', prev !== 'home');
-  headerTitle.textContent = TITLES[prev] || 'Business English B1';
-  render(prev, {});
-  document.querySelectorAll('nav button').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === prev);
-  });
-  window.scrollTo(0, 0);
-};
-
-document.querySelectorAll('nav button').forEach(b => {
-  b.onclick = () => {
-    screenStack = [];
-    navigate(b.dataset.tab, {});
-  };
-});
-
-// ============================================================
-// ЭКРАН: ГЛАВНАЯ
-// ============================================================
-
-function renderHome() {
-  const { stats, streak } = STATE;
-  let total = 0, mastered = 0, learning = 0;
-  for (const t of TOPICS) {
-    const p = topicProgress(t);
-    total += p.total;
-    mastered += p.mastered;
-    learning += p.learning;
-  }
-
-  const items = [
-    { screen: 'topics', title: '📚 Словарь по темам', desc: '10 бизнес-тем + SRS' },
-    { screen: 'reading', title: '📖 Бизнес-чтение', desc: 'Письма, отчёты, кейсы' },
-    { screen: 'listening', title: '🎧 Бизнес-аудио', desc: 'Звонки, встречи, переговоры' },
-    { screen: 'grammar', title: '🧩 Грамматика', desc: '20 упражнений B1' },
-    { screen: 'exams', title: '📝 Экзамены', desc: 'По темам, оценка A–F' },
-    { screen: 'stats', title: '📊 Статистика', desc: 'Прогресс, streak, точность' },
-  ];
-
-  app.innerHTML = `
-    <div class="stats-header">
-      <div class="streak">🔥 Streak: ${streak.count} дн.</div>
-      <div class="summary">
-        Слова: ${mastered} освоено · ${learning} в работе · ${total - mastered - learning} новых
-      </div>
-    </div>
-    ${items.map(i => `
-      <div class="card tap" data-screen="${i.screen}">
-        <div class="card-title">${i.title}</div>
-        <div class="card-desc">${i.desc}</div>
-      </div>
-    `).join('')}
-  `;
-
-  app.querySelectorAll('[data-screen]').forEach(el => {
-    el.onclick = () => navigate(el.dataset.screen, {});
-  });
-}
-
-// ============================================================
-// ЭКРАН: СПИСОК ТЕМ
-// ============================================================
-
-function renderTopics() {
-  app.innerHTML = TOPICS.map(t => {
-    const p = topicProgress(t);
-    const pct = Math.round((p.mastered / p.total) * 100);
-    const ready = (p.mastered + p.learning) / p.total >= 0.6;
-    const exam = STATE.exams[t.id];
-    return `
-      <div class="card">
-        <div class="card-row" data-topic="${t.id}">
-          <div style="flex:1">
-            <div class="card-title">${t.emoji} ${t.title}</div>
-            <div class="card-desc">🟢 ${p.mastered} · 🟡 ${p.learning} · ⚪ ${p.fresh} из ${p.total}</div>
-          </div>
-          <div style="font-weight:700;color:var(--blue)">${pct}%</div>
-        </div>
-        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
-        <button class="btn ${ready ? '' : 'secondary'}" data-exam="${t.id}" ${ready ? '' : 'disabled'} style="margin-top:12px">
-          ${ready ? '📝 Пройти экзамен' : '🔒 Нужно 60% слов'}
-        </button>
-        ${exam ? `<div class="muted" style="text-align:center;margin-top:8px">Лучший: ${exam.best}/10 · попыток: ${exam.attempts}</div>` : ''}
-      </div>
-    `;
-  }).join('');
-
-  app.querySelectorAll('[data-topic]').forEach(el => {
-    el.onclick = () => navigate('vocab', { topicId: el.dataset.topic });
-  });
-  app.querySelectorAll('[data-exam]').forEach(el => {
-    el.onclick = (e) => {
-      e.stopPropagation();
-      if (!el.disabled) navigate('exam', { topicId: el.dataset.exam });
-    };
-  });
-}
-
-// ============================================================
-// ЭКРАН: КАРТОЧКИ СЛОВ
-// ============================================================
-
-let vocabSession = null;
-
-function renderVocab(params) {
-  const topic = TOPICS.find(t => t.id === params.topicId);
-  if (!topic) { navigate('topics', {}); return; }
-  headerTitle.textContent = topic.emoji + ' ' + topic.title;
-
-  const words = topic.words.map(w => ({
-    ...w,
-    key: topic.id + ':' + w.en,
-    topicEmoji: topic.emoji,
-  }));
-  const queue = pickQueue(words);
-
-  if (!queue.length) {
-    vocabSession = null;
-    app.innerHTML = `
-      <div class="center">
-        <div style="font-size:60px">🎉</div>
-        <h2 style="margin-top:12px">Всё повторено!</h2>
-        <p class="muted" style="margin-top:8px">Возвращайся, когда наступит время повторения.</p>
-        <button class="btn" onclick="navigate('topics',{})">К темам</button>
-      </div>
-    `;
-    return;
-  }
-
-  vocabSession = { topicId: topic.id, queue, idx: 0, showBack: false, correct: 0, wrong: 0 };
-  drawVocabCard();
-}
-
-function drawVocabCard() {
-  const s = vocabSession;
-  if (!s) return;
-  if (s.idx >= s.queue.length) return finishVocab();
-  const w = s.queue[s.idx];
-  const lvl = STATE.vocab[w.key]?.level ?? 0;
-
-  app.innerHTML = `
-    <div class="muted" style="margin-bottom:10px;font-size:13px">
-      ${s.idx + 1} / ${s.queue.length} · уровень ${lvl}/5
-    </div>
-
-    <div class="word-card">
-      <div class="word-en">${w.en}</div>
-      <button class="speak-btn" id="speakWord">🔊 Произнести</button>
-      ${s.showBack ? `
-        <div class="word-ru">${w.ru}</div>
-        <div class="word-ex">${w.ex}</div>
-      ` : ''}
-    </div>
-
-    ${!s.showBack ? `
-      <button class="btn" id="showBtn">Показать перевод</button>
-    ` : `
-      <div class="btn-row">
-        <button class="btn red" id="noBtn">Не знаю</button>
-        <button class="btn green" id="yesBtn">Знаю</button>
-      </div>
-    `}
-  `;
-
-  document.getElementById('speakWord').onclick = () => speak(w.en);
-  if (!s.showBack) {
-    document.getElementById('showBtn').onclick = () => {
-      s.showBack = true;
-      speak(w.en);
-      drawVocabCard();
-    };
-  } else {
-    document.getElementById('noBtn').onclick = () => answerWord(false);
-    document.getElementById('yesBtn').onclick = () => answerWord(true);
-  }
-}
-
-function answerWord(known) {
-  const s = vocabSession;
-  const w = s.queue[s.idx];
-  STATE.vocab[w.key] = updateWord(STATE.vocab[w.key], known);
-  recordAnswer('vocab', known);
-  if (known) s.correct++; else s.wrong++;
-  s.idx++;
-  s.showBack = false;
-  drawVocabCard();
-}
-
-function finishVocab() {
-  const s = vocabSession;
-  const total = s.correct + s.wrong;
-  const acc = total ? Math.round(s.correct / total * 100) : 0;
-  vocabSession = null;
-  app.innerHTML = `
-    <div class="center">
-      <div style="font-size:60px">🎉</div>
-      <h2 style="margin-top:12px">Сессия завершена!</h2>
-      <p class="muted" style="margin-top:8px">Правильно: ${s.correct} / ${total} (${acc}%)</p>
-      <button class="btn" onclick="navigate('topics',{})">К темам</button>
-    </div>
-  `;
-}
+</script>
+</body>
+</html>
